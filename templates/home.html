@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SIAU - Strona główna</title>
+</head>
+<body>
+    <h1>{{ message }}</h1>
+    <p>Jesteś zalogowany jako: {{ user.username }}</p>
+    <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit">Wyloguj się</button>
+    </form>
+</body>
+</html>
