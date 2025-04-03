@@ -5,7 +5,13 @@
 </head>
 <body>
     <h1>{{ message }}</h1>
-    <p>Jesteś zalogowany jako: {{ user.username }}</p>
+    <p>Jesteś zalogowany jako: {{ user.username }} (Rola: {{ user.role }})</p>
+    <h2>Menu</h2>
+    <ul>
+        {% for item in menu %}
+            <li><a href="{{ item.url }}">{{ item.name }}</a></li>
+        {% endfor %}
+    </ul>
     <form method="post" action="{% url 'logout' %}">
         {% csrf_token %}
         <button type="submit">Wyloguj się</button>
