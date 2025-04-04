@@ -18,6 +18,7 @@
                     <th>Nazwa użytkownika</th>
                     <th>Rola</th>
                     <th>Email</th>
+                    <th>Akcje</th>
                 </tr>
             </thead>
             <tbody>
@@ -26,10 +27,16 @@
                         <td>{{ user.username }}</td>
                         <td>{{ user.role }}</td>
                         <td>{{ user.email }}</td>
+                        <td>
+                            <a href="{% url 'edit_user' user.id %}" class="btn btn-primary btn-sm">Edytuj</a>
+                            {% if user.id != request.user.id %}
+                                <a href="{% url 'delete_user' user.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Czy na pewno chcesz usunąć tego użytkownika?')">Usuń</a>
+                            {% endif %}
+                        </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="3">Brak użytkowników.</td>
+                        <td colspan="4">Brak użytkowników.</td>
                     </tr>
                 {% endfor %}
             </tbody>
