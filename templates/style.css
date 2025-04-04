@@ -1,0 +1,13 @@
+.header-bg {
+    background: url('https://via.placeholder.com/1200x200?text=Logo+PRz') no-repeat center;
+    background-size: cover;
+    height: 200px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+}

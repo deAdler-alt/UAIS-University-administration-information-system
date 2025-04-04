@@ -12,23 +12,54 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    {% for item in menu %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ item.url }}">{{ item.name }}</a>
-                        </li>
-                    {% endfor %}
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    {% if user.is_authenticated %}
+                        {% if user.role == 'ADMIN' %}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="adminMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Administracja
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="adminMenu">
+                                    <li><a class="dropdown-item" href="/admin/">Zarządzanie użytkownikami</a></li>
+                                    <li><a class="dropdown-item" href="#">Sekcja administracyjna</a></li>
+                                </ul>
+                            </li>
+                        {% elif user.role == 'PRAWNIK' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Dokumenty prawne</a>
+                            </li>
+                        {% elif user.role == 'OBSLUGA' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Obsługa wniosków</a>
+                            </li>
+                        {% elif user.role == 'RADA' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Posiedzenia rady</a>
+                            </li>
+                        {% endif %}
+                    {% endif %}
                 </ul>
-                <form method="post" action="{% url 'logout' %}" class="ms-auto">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">Wyloguj się</button>
-                </form>
+                <div class="d-flex">
+                    {% if user.is_authenticated %}
+                        <span class="navbar-text me-3">Zalogowany jako: {{ user.username }} ({{ user.role }})</span>
+                        <form method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Wyloguj się</button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-primary">Zaloguj się</a>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </nav>
     <div class="container mt-5">
-        <h1>{{ message }}</h1>
-        <p>Jesteś zalogowany jako: {{ user.username }} (Rola: {{ user.role }})</p>
+        <h1>Witaj w SIAU!</h1>
+        {% if user.is_authenticated %}
+            <p>Jesteś zalogowany jako: {{ user.username }} (Rola: {{ user.role }})</p>
+        {% else %}
+            <p>Proszę się zalogować, aby zobaczyć zawartość.</p>
+        {% endif %}
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
