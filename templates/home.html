@@ -8,9 +8,9 @@
 </head>
 <body>
     <div class="header-bg">
-        <h1>SIAU - System Informacyjny</h1>
+        <h1>System Informatyczny Administracji Uniwersyteckiej</h1>
     </div>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">SIAU</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,7 +49,7 @@
             </div>
         </div>
     </nav>
-    <div class="container mt-5">
+    <div class="container">
         <h1>Witaj w SIAU!</h1>
         {% if user.is_authenticated %}
             <p>Jesteś zalogowany jako: {{ user.username }} (Rola: {{ user.role }})</p>
