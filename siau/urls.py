@@ -6,7 +6,8 @@ from users.views import (home, no_role, manage_users, system_settings, reports,
                          protocols, add_resolution, access_denied, export_data,
                          import_data, legal_requests, legal_history, schedule,
                          announcements, view_resolutions, archive_resolutions,
-                         edit_user, delete_user)
+                         edit_user, delete_user, dashboard, news, catalog,
+                         for_everyone)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -14,6 +15,10 @@ urlpatterns = [
     path('', home, name='home'),
     path('no-role/', no_role, name='no_role'),
     path('access-denied/', access_denied, name='access_denied'),
+    path('dashboard/', dashboard, name='dashboard'),
+    path('news/', news, name='news'),
+    path('catalog/', catalog, name='catalog'),
+    path('for_everyone/', for_everyone, name='for_everyone'),
     path('manage_users/', manage_users, name='manage_users'),
     path('edit_user/<int:user_id>/', edit_user, name='edit_user'),
     path('delete_user/<int:user_id>/', delete_user, name='delete_user'),

@@ -7,8 +7,20 @@ def home(request):
     if not request.user.role:
         return redirect('no_role')
 
+    # Definicja menu dla każdej roli
     menu_items = {
         'ADMIN': [
+            {'name': 'Pulpit', 'url': '/dashboard/', 'submenu': [
+                {'name': 'Zarządzanie użytkownikami', 'url': '/manage_users/', 'allowed_roles': ['ADMIN']},
+                {'name': 'Ustawienia systemu', 'url': '/system_settings/', 'allowed_roles': ['ADMIN']},
+                {'name': 'Raporty', 'url': '/reports/', 'allowed_roles': ['ADMIN']},
+            ]},
+            {'name': 'Aktualności', 'url': '/news/', 'submenu': [
+                {'name': 'Najnowsze aktualizacje', 'url': '/news/', 'allowed_roles': ['ADMIN', 'PRAWNIK', 'OBSLUGA', 'RADA']},
+            ]},
+            {'name': 'Katalog', 'url': '/catalog/', 'submenu': [
+                {'name': 'Wyszukiwanie', 'url': '/catalog/', 'allowed_roles': ['ADMIN', 'PRAWNIK', 'OBSLUGA', 'RADA']},
+            ]},
             {'name': 'Administracja', 'url': '#', 'submenu': [
                 {'name': 'Zarządzanie użytkownikami', 'url': '/manage_users/', 'allowed_roles': ['ADMIN']},
                 {'name': 'Ustawienia systemu', 'url': '/system_settings/', 'allowed_roles': ['ADMIN']},
@@ -18,8 +30,26 @@ def home(request):
                 {'name': 'Eksport danych', 'url': '/export_data/', 'allowed_roles': ['ADMIN']},
                 {'name': 'Import danych', 'url': '/import_data/', 'allowed_roles': ['ADMIN']},
             ]},
+            {'name': 'Dokumenty prawne', 'url': '#', 'submenu': [
+                {'name': 'Przeglądaj dokumenty', 'url': '/legal_docs/', 'allowed_roles': ['PRAWNIK']},
+                {'name': 'Dodaj dokument', 'url': '/add_doc/', 'allowed_roles': ['PRAWNIK']},
+                {'name': 'Archiwum dokumentów', 'url': '/archive_docs/', 'allowed_roles': ['PRAWNIK']},
+            ]},
+            {'name': 'Dla wszystkich', 'url': '/for_everyone/', 'submenu': [
+                {'name': 'Informacje o radzie wydziału', 'url': '/for_everyone/', 'allowed_roles': ['ADMIN', 'PRAWNIK', 'OBSLUGA', 'RADA']},
+            ]},
         ],
         'PRAWNIK': [
+            {'name': 'Pulpit', 'url': '/dashboard/', 'submenu': [
+                {'name': 'Przeglądaj dokumenty', 'url': '/legal_docs/', 'allowed_roles': ['PRAWNIK']},
+                {'name': 'Dodaj dokument', 'url': '/add_doc/', 'allowed_roles': ['PRAWNIK']},
+            ]},
+            {'name': 'Aktualności', 'url': '/news/', 'submenu': [
+                {'name': 'Najnowsze aktualizacje', 'url': '/news/', 'allowed_roles': ['ADMIN', 'PRAWNIK', 'OBSLUGA', 'RADA']},
+            ]},
+            {'name': 'Katalog', 'url': '/catalog/', 'submenu': [
+                {'name': 'Wyszukiwanie', 'url': '/catalog/', 'allowed_roles': ['ADMIN', 'PRAWNIK', 'OBSLUGA', 'RADA']},
+            ]},
             {'name': 'Dokumenty prawne', 'url': '#', 'submenu': [
                 {'name': 'Przeglądaj dokumenty', 'url': '/legal_docs/', 'allowed_roles': ['PRAWNIK']},
                 {'name': 'Dodaj dokument', 'url': '/add_doc/', 'allowed_roles': ['PRAWNIK']},
@@ -29,8 +59,21 @@ def home(request):
                 {'name': 'Wnioski o opinię prawną', 'url': '/legal_requests/', 'allowed_roles': ['PRAWNIK']},
                 {'name': 'Historia opinii', 'url': '/legal_history/', 'allowed_roles': ['PRAWNIK']},
             ]},
+            {'name': 'Dla wszystkich', 'url': '/for_everyone/', 'submenu': [
+                {'name': 'Informacje o radzie wydziału', 'url': '/for_everyone/', 'allowed_roles': ['ADMIN', 'PRAWNIK', 'OBSLUGA', 'RADA']},
+            ]},
         ],
         'OBSLUGA': [
+            {'name': 'Pulpit', 'url': '/dashboard/', 'submenu': [
+                {'name': 'Przeglądaj wnioski', 'url': '/view_requests/', 'allowed_roles': ['OBSLUGA']},
+                {'name': 'Harmonogram wydarzeń', 'url': '/schedule/', 'allowed_roles': ['OBSLUGA']},
+            ]},
+            {'name': 'Aktualności', 'url': '/news/', 'submenu': [
+                {'name': 'Najnowsze aktualizacje', 'url': '/news/', 'allowed_roles': ['ADMIN', 'PRAWNIK', 'OBSLUGA', 'RADA']},
+            ]},
+            {'name': 'Katalog', 'url': '/catalog/', 'submenu': [
+                {'name': 'Wyszukiwanie', 'url': '/catalog/', 'allowed_roles': ['ADMIN', 'PRAWNIK', 'OBSLUGA', 'RADA']},
+            ]},
             {'name': 'Obsługa wniosków', 'url': '#', 'submenu': [
                 {'name': 'Przeglądaj wnioski', 'url': '/view_requests/', 'allowed_roles': ['OBSLUGA']},
                 {'name': 'Obsłuż wniosek', 'url': '/handle_request/', 'allowed_roles': ['OBSLUGA']},
@@ -40,8 +83,26 @@ def home(request):
                 {'name': 'Harmonogram wydarzeń', 'url': '/schedule/', 'allowed_roles': ['OBSLUGA']},
                 {'name': 'Komunikaty', 'url': '/announcements/', 'allowed_roles': ['OBSLUGA']},
             ]},
+            {'name': 'Dokumenty prawne', 'url': '#', 'submenu': [
+                {'name': 'Przeglądaj dokumenty', 'url': '/legal_docs/', 'allowed_roles': ['PRAWNIK']},
+                {'name': 'Dodaj dokument', 'url': '/add_doc/', 'allowed_roles': ['PRAWNIK']},
+                {'name': 'Archiwum dokumentów', 'url': '/archive_docs/', 'allowed_roles': ['PRAWNIK']},
+            ]},
+            {'name': 'Dla wszystkich', 'url': '/for_everyone/', 'submenu': [
+                {'name': 'Informacje o radzie wydziału', 'url': '/for_everyone/', 'allowed_roles': ['ADMIN', 'PRAWNIK', 'OBSLUGA', 'RADA']},
+            ]},
         ],
         'RADA': [
+            {'name': 'Pulpit', 'url': '/dashboard/', 'submenu': [
+                {'name': 'Plan posiedzeń', 'url': '/meeting_plan/', 'allowed_roles': ['RADA']},
+                {'name': 'Dodaj uchwałę', 'url': '/add_resolution/', 'allowed_roles': ['RADA']},
+            ]},
+            {'name': 'Aktualności', 'url': '/news/', 'submenu': [
+                {'name': 'Najnowsze aktualizacje', 'url': '/news/', 'allowed_roles': ['ADMIN', 'PRAWNIK', 'OBSLUGA', 'RADA']},
+            ]},
+            {'name': 'Katalog', 'url': '/catalog/', 'submenu': [
+                {'name': 'Wyszukiwanie', 'url': '/catalog/', 'allowed_roles': ['ADMIN', 'PRAWNIK', 'OBSLUGA', 'RADA']},
+            ]},
             {'name': 'Posiedzenia rady', 'url': '#', 'submenu': [
                 {'name': 'Plan posiedzeń', 'url': '/meeting_plan/', 'allowed_roles': ['RADA']},
                 {'name': 'Protokoły', 'url': '/protocols/', 'allowed_roles': ['RADA']},
@@ -50,6 +111,14 @@ def home(request):
             {'name': 'Dokumenty', 'url': '#', 'submenu': [
                 {'name': 'Przeglądaj uchwały', 'url': '/view_resolutions/', 'allowed_roles': ['RADA']},
                 {'name': 'Archiwum uchwał', 'url': '/archive_resolutions/', 'allowed_roles': ['RADA']},
+            ]},
+            {'name': 'Dokumenty prawne', 'url': '#', 'submenu': [
+                {'name': 'Przeglądaj dokumenty', 'url': '/legal_docs/', 'allowed_roles': ['PRAWNIK']},
+                {'name': 'Dodaj dokument', 'url': '/add_doc/', 'allowed_roles': ['PRAWNIK']},
+                {'name': 'Archiwum dokumentów', 'url': '/archive_docs/', 'allowed_roles': ['PRAWNIK']},
+            ]},
+            {'name': 'Dla wszystkich', 'url': '/for_everyone/', 'submenu': [
+                {'name': 'Informacje o radzie wydziału', 'url': '/for_everyone/', 'allowed_roles': ['ADMIN', 'PRAWNIK', 'OBSLUGA', 'RADA']},
             ]},
         ],
     }
@@ -66,6 +135,22 @@ def no_role(request):
 @login_required
 def access_denied(request):
     return render(request, 'access_denied.html')
+
+@login_required
+def dashboard(request):
+    return render(request, 'dashboard.html', {'message': 'Pulpit - szybki dostęp do funkcji'})
+
+@login_required
+def news(request):
+    return render(request, 'news.html', {'message': 'Najnowsze aktualizacje na serwisie'})
+
+@login_required
+def catalog(request):
+    return render(request, 'catalog.html', {'message': 'Katalog wydziału - wyszukiwanie jednostek i osób'})
+
+@login_required
+def for_everyone(request):
+    return render(request, 'for_everyone.html', {'message': 'Informacje o radzie wydziału'})
 
 @login_required
 def manage_users(request):
@@ -92,7 +177,7 @@ def delete_user(request, user_id):
     if request.user.role != 'ADMIN':
         return redirect('access_denied')
     user = get_object_or_404(CustomUser, id=user_id)
-    if request.user.id != user.id:
+    if request.user.id != user.id:  # Nie można usunąć samego siebie
         user.delete()
     return redirect('manage_users')
 
