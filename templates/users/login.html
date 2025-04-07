@@ -1,90 +1,270 @@
-{% extends 'base.html' %} {# Dziedziczymy po base.html #}
+{% extends 'base.html' %}
+{% load static %} {# Dodajemy na wypadek użycia statycznych plików w przyszłości #}
 
-{% block title %}Logowanie - UAIS{% endblock %} {# Nadpisujemy tytuł #}
+{% block title %}Logowanie - UAIS{% endblock %}
 
-{% block content %} {# Nadpisujemy blok content #}
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-4"> {# Używamy kolumn Bootstrapa dla lepszego wyglądu #}
-            <h1 class="text-center mb-4">Logowanie do systemu UAIS</h1>
+{# Dodajemy blok na style specyficzne dla tej strony #}
 
-            <form method="post" novalidate> {# novalidate wyłącza domyślną walidację HTML5 przeglądarki #}
-                {% csrf_token %}
+{% block extra_head %}
+<style>
 
-                {% if form.non_field_errors %}
-                    <div class="alert alert-danger" role="alert">
-                        {% for error in form.non_field_errors %}
+    body {
+        /* Bardziej intensywny niebieski/navy jako tło */
+        background-color: #0d2d52 !important;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    .content-wrapper {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        width: 100%;
+    }
+
+    .login-container {
+        max-width: 500px;
+        width: 100%;
+        background-color: #FFFFFF;
+        /* Łagodniejsza ramka lub jej brak, ale z wyraźnym cieniem */
+        border: 1px solid #d1d1d1; /* Jasnoszara, subtelna ramka */
+        border-radius: 8px; /* Bardziej zaokrąglone rogi */
+        padding: 35px 40px; /* Dostosowany padding */
+        color: #000000;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15); /* Wyraźniejszy cień */
+    }
+
+    .login-container h1,
+    .login-container h2,
+    .login-container h3 {
+        text-align: center;
+        color: #000000;
+    }
+    /* Precyzyjne dopasowanie rozmiarów i odstępów nagłówków */
+    .login-container h1 { font-size: 26px; font-weight: 600; margin-bottom: 8px; }
+    .login-container h2 { font-size: 18px; font-weight: 400; margin-bottom: 15px; color: #333; }
+    .login-container h3 { font-size: 16px; font-weight: 500; margin-bottom: 30px; color: #111; }
+
+    .login-container .form-label {
+        font-weight: 600; /* Grubsza etykieta */
+        font-size: 14px;
+        color: #000000;
+        margin-bottom: 5px;
+    }
+
+    .login-container .form-control {
+        border-radius: 4px; /* Lekko zaokrąglone */
+        border: 1px solid #ced4da; /* Standardowa ramka Bootstrapa */
+        padding: 10px 12px;
+        font-size: 14px;
+        color: #000000;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out; /* Standardowa animacja Bootstrapa */
+    }
+     /* Styl przy focusie - subtelny niebieski */
+    .login-container .form-control:focus {
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    /* Styl pola w stanie błędu */
+    .login-container .form-control.is-invalid {
+        border-color: #dc3545 !important; /* Czerwona ramka - ważne, by nadpisać */
+        background-image: none; /* Bez ikonki w tle */
+    }
+    .login-container .form-control.is-invalid:focus {
+         border-color: #dc3545;
+         box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25); /* Czerwony cień przy focusie */
+    }
+    /* Komunikat o błędzie pod polem */
+    .login-container .invalid-feedback {
+        color: #dc3545;
+        font-size: 13px; /* Czytelny rozmiar */
+        text-align: left;
+        margin-top: 4px;
+        display: block; /* Zawsze widoczny, gdy jest klasa is-invalid */
+    }
+
+    /* Komunikat ogólny (np. złe hasło) */
+     .login-container .alert-danger {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+        font-size: 14px;
+        padding: 12px;
+        margin-bottom: 20px;
+        text-align: center;
+        border-radius: 4px;
+     }
+
+    /* Przycisk oka - dostosowanie do wyglądu ze zrzutu */
+    .login-container .password-toggle-btn {
+        border: 1px solid #ced4da; /* Taka sama ramka jak input */
+        border-left: none; /* Usuwamy lewą ramkę, by przylegał do pola */
+        background-color: #ffffff; /* Białe tło */
+        color: #003087; /* Granatowa ikonka */
+        padding: 0 10px; /* Padding poziomy */
+    }
+     .login-container .password-toggle-btn:hover {
+         background-color: #f1f1f1;
+     }
+     .login-container .password-toggle-btn i {
+         font-size: 1.2rem; /* Nieco większa ikonka */
+         vertical-align: middle; /* Lepsze wyrównanie pionowe */
+     }
+     /* Dostosowanie zaokrąglenia przy grupie */
+     .login-container .input-group .form-control { border-right: none; }
+     .login-container .input-group .form-control:focus { box-shadow: none; } /* Usuwamy cień przy focusie na polu, gdy jest przycisk */
+     .login-container .input-group > :not(:last-child):not(.dropdown-toggle):not(.dropdown-menu) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+     .login-container .input-group > :not(:first-child):not(.dropdown-menu):not(.valid-tooltip):not(.valid-feedback):not(.invalid-tooltip):not(.invalid-feedback) { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+
+
+    /* Przycisk logowania - styl ze zrzutu */
+    .login-container .btn-login {
+        background-color: #003087; /* Główny kolor navy */
+        color: #FFFFFF;
+        font-weight: 600; /* Grubszy font */
+        padding: 10px 15px; /* Dostosowany padding */
+        border: none;
+        border-radius: 5px; /* Lekko zaokrąglone rogi */
+        width: 100%;
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out;
+        font-size: 16px;
+        text-transform: uppercase; /* Wielkie litery */
+        margin-top: 10px; /* Odstęp nad przyciskiem */
+    }
+    .login-container .btn-login:hover {
+        background-color: #002060; /* Ciemniejszy odcień */
+        color: #FFFFFF;
+    }
+
+     /* Linia horyzontalna */
+     .login-container hr {
+         margin-top: 25px; /* Odstęp nad linią */
+         margin-bottom: 0; /* Brak odstępu pod linią */
+         border-color: #e0e0e0; /* Jaśniejszy kolor linii */
+     }
+
+    /* --- Style dla stopki i ukrywania elementów z base.html --- */
+     body > .navbar { display: none !important; }
+     body > footer { display: none !important; }
+
+     .footer-bar {
+         border-top: none; /* Bez górnej ramki */
+         background-color: #0d2d52; /* Taki sam kolor jak tło body */
+         color: #ffffff;
+         text-align: center;
+         padding: 15px; /* Trochę więcej paddingu */
+         width: 100%;
+         margin-top: auto;
+         box-shadow: 0 -3px 6px rgba(0, 0, 0, 0.1); /* Cień na górze stopki */
+     }
+     .footer-bar p { margin: 0; font-size: 13px; }
+     .footer-bar a { color: #aedff7; text-decoration: underline; } /* Jaśniejszy niebieski dla linków */
+     .footer-bar a:hover { color: #ffffff; }
+
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="login-container">
+    <h1>Centralna Usługa Uwierzytelniania</h1>
+    <h2>System Informatyczny Administracji Uniwersyteckiej</h2>
+    <h3>Wprowadź e-mail i hasło</h3>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="mb-3">
+            <label for="{{ form.username.id_for_label }}" class="form-label">E-mail:*</label>
+            <input type="text" {# Nadal text, bo Django obsłuży tu email po zmianie backendu #}
+                   name="{{ form.username.name }}"
+                   id="{{ form.username.id_for_label }}"
+                   class="form-control {% if form.username.errors or form.non_field_errors %}is-invalid{% endif %}" {# Dodajemy is-invalid także przy non_field_errors #}
+                   required
+                   value="{{ form.username.value|default_if_none:'' }}">
+            {# Komunikat o błędzie specyficzny dla pola username/email #}
+            {% if form.username.errors %}
+                <div class="invalid-feedback">
+                    {% for error in form.username.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+             {# Dodajemy komunikat "pole wymagane", jeśli błędu nie ma, ale pole jest puste (opcjonalne, bo Django da błąd) #}
+             {# Można by to obsłużyć JS, ale polegajmy na błędach Django #}
+            {% endif %}
+        </div>
+
+        <div class="mb-3">
+            <label for="{{ form.password.id_for_label }}" class="form-label">Hasło:*</label>
+             <div class="input-group">
+                <input type="password"
+                       name="{{ form.password.name }}"
+                       id="{{ form.password.id_for_label }}"
+                       class="form-control {% if form.password.errors or form.non_field_errors %}is-invalid{% endif %}" {# Dodajemy is-invalid także przy non_field_errors #}
+                       required>
+                <button class="btn btn-outline-secondary password-toggle-btn" type="button" onclick="togglePasswordVisibility('{{ form.password.id_for_label }}', this)">
+                    <i class="bi bi-eye-slash-fill"></i>
+                </button>
+                {# Komunikat o błędzie specyficzny dla pola hasła #}
+                {% if form.password.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.password.errors %}
                             {{ error }}
                         {% endfor %}
                     </div>
                 {% endif %}
-
-                <div class="mb-3"> {# Używamy klas Bootstrapa dla pól formularza #}
-                    <label for="{{ form.username.id_for_label }}" class="form-label">{{ form.username.label_tag }}</label>
-                    <input type="{{ form.username.field.widget.input_type }}"
-                           name="{{ form.username.name }}"
-                           id="{{ form.username.id_for_label }}"
-                           class="form-control {% if form.username.errors %}is-invalid{% endif %}" {# Dodajemy klasę is-invalid jeśli są błędy #}
-                           placeholder="Nazwa użytkownika lub Email"
-                           required {% comment %} Django Forms dodaje 'required' automatycznie, ale można też tu {% endcomment %}
-                           value="{{ form.username.value|default_if_none:'' }}">
-                    {% if form.username.errors %}
-                        <div class="invalid-feedback"> {# Komunikat o błędzie dla Bootstrapa #}
-                            {% for error in form.username.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-
-                <div class="mb-3">
-                    <label for="{{ form.password.id_for_label }}" class="form-label">{{ form.password.label_tag }}</label>
-                     <div class="input-group"> {# Używamy input-group dla ikonki oka #}
-                        <input type="{{ form.password.field.widget.input_type }}"
-                               name="{{ form.password.name }}"
-                               id="{{ form.password.id_for_label }}"
-                               class="form-control {% if form.password.errors %}is-invalid{% endif %}"
-                               placeholder="Hasło"
-                               required>
-                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('{{ form.password.id_for_label }}', this)">
-                            <i class="bi bi-eye-slash-fill"></i> {# Ikona Bootstrapa #}
-                        </button>
-                         {% if form.password.errors %}
-                            <div class="invalid-feedback">
-                                {% for error in form.password.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                         {% else %}
-                           {# Można dodać podpowiedź, jeśli nie ma błędu #}
-                         {% endif %}
-                     </div>
-                </div>
-
-                <div class="d-grid gap-2"> {# Przycisk na całą szerokość #}
-                    <button type="submit" class="btn btn-primary">Zaloguj się</button>
-                </div>
-            </form>
-             <p class="mt-3 text-center"> <a href="#">Zapomniałeś hasła?</a> </p> {# Placeholder #}
+             </div>
         </div>
-    </div>
 
-    {# Przenosimy skrypt JS do bloku extra_scripts dla porządku #}
+        <button type="submit" class="btn btn-login">Zaloguj się</button>
+
+        <hr> {# Dodana linia pozioma #}
+
+    </form>
+    {# Usunięty link "Zapomniałeś hasła?" #}
+</div>
+
+{# Stopka z Twojego przykładu - przeniesiona tutaj z poprzedniej wersji #}
+<div class="footer-bar">
+    <p>
+        Copyright © 2025
+        <a href="https://github.com/GitEagly">github.com/GitEagly</a> &amp;
+        <a href="https://github.com/FiFulini">github.com/FiFulini</a>,
+        Wszelkie prawa zastrzeżone. Powered by <a href="https://www.djangoproject.com/">Django</a>
+    </p>
+</div>
 {% endblock %}
 
+
 {% block extra_scripts %}
-    <script>
-        function togglePasswordVisibility(fieldId, button) {
-            const passwordField = document.getElementById(fieldId);
-            const icon = button.querySelector('i'); // Znajdź ikonę wewnątrz przycisku
-            if (passwordField.type === "password") {
-                passwordField.type = "text";
-                icon.classList.remove('bi-eye-slash-fill'); // Zmień klasę ikony
-                icon.classList.add('bi-eye-fill');
-            } else {
-                passwordField.type = "password";
-                icon.classList.remove('bi-eye-fill');
-                icon.classList.add('bi-eye-slash-fill');
-            }
+{# Skrypt do przełączania widoczności hasła - bez zmian #}
+<script>
+    function togglePasswordVisibility(fieldId, button) {
+        const passwordField = document.getElementById(fieldId);
+        const icon = button.querySelector('i');
+        if (passwordField.type === "password") {
+            passwordField.type = "text";
+            icon.classList.remove('bi-eye-slash-fill');
+            icon.classList.add('bi-eye-fill');
+        } else {
+            passwordField.type = "password";
+            icon.classList.remove('bi-eye-fill');
+            icon.classList.add('bi-eye-slash-fill');
         }
-    </script>
+    }
+</script>
 {% endblock %}
