@@ -1,16 +1,39 @@
 # users/views.py
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required # Opcjonalnie, jeśli strona główna wymaga zalogowania
+from django.contrib.auth.decorators import login_required
 
-# Widok strony logowania (już go nie potrzebujemy definiować, bo używamy auth_views.LoginView)
-# def login_view(request):
-#    pass
-
-# Widok strony głównej
-# @login_required # Odkomentuj, jeśli chcesz, aby dostęp był tylko dla zalogowanych
+# @login_required
 def home_view(request):
+    # Przykładowe dane commitów (zastąpimy je później danymi z API)
+    dummy_commits = [
+        {
+            'sha': 'a1b2c3d4',
+            'author': 'Jan Kowalski',
+            'date': '2025-04-07T10:30:00Z', # Format ISO 8601
+            'message': 'Fix: Poprawiono błąd walidacji w formularzu 217.'
+        },
+        {
+            'sha': 'e5f6g7h8',
+            'author': 'Anna Nowak',
+            'date': '2025-04-07T09:15:00Z',
+            'message': 'Feat: Dodano nową funkcję eksportu do PDF.\n\n- Umożliwia eksport danych z tabeli Y.\n- Dodano testy jednostkowe.'
+        },
+        {
+            'sha': 'i9j0k1l2',
+            'author': 'Jan Kowalski',
+            'date': '2025-04-06T18:00:00Z',
+            'message': 'Refactor: Zmieniono strukturę modułu Z.'
+        },
+        {
+            'sha': 'm3n4o5p6',
+            'author': 'Piotr Wiśniewski',
+            'date': '2025-04-06T15:45:00Z',
+            'message': 'Style: Poprawki w wyglądzie strony logowania.'
+        },
+    ]
+
     context = {
         'welcome_message': 'Witaj w systemie UAIS!',
+        'commits': dummy_commits
     }
-    # Użyjemy szablonu 'home.html', który będzie w głównym folderze templates
     return render(request, 'home.html', context)

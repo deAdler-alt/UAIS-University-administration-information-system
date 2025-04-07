@@ -126,12 +126,11 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTHENTICATION_BACKENDS = [
-    'users.backends.EmailBackend', # Ścieżka do Twojego backendu
-    # 'django.contrib.auth.backends.ModelBackend', # Usuwamy lub komentujemy domyślny backend
+    'users.backends.EmailBackend', 
+    # 'django.contrib.auth.backends.ModelBackend'
 ]
 
 AUTH_USER_MODEL = 'users.User'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
-LOGOUT_REDIRECT_URL = '/'
-
+LOGOUT_REDIRECT_URL = 'login'

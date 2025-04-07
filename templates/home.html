@@ -1,26 +1,59 @@
-{% extends 'base.html' %} {# Dziedziczymy po base.html #}
+{% extends 'base.html' %}
+{% load static %} {# Upewnij się, że static jest załadowane #}
 
-{% block title %}Strona Główna - UAIS{% endblock %} {# Nadpisujemy tytuł #}
+{% block title %}Aktualności{% endblock %}
 
-{% block content %} {# Nadpisujemy blok content #}
-    <h1>{{ welcome_message }}</h1>
-    <p>To jest główna strona aplikacji.</p>
+{% block extra_head %}
+    {# Dodatkowe style dla kart commitów, jeśli potrzeba #}
+    <style>
+        .commit-card {
+            border-left: 5px solid #0d6efd; /* Niebieski akcent po lewej */
+        }
+        .commit-sha {
+            font-family: monospace;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+         .commit-message-preview {
+             white-space: pre-wrap; /* Zachowuje nowe linie z wiadomości commita */
+             font-size: 0.95em;
+         }
+    </style>
+{% endblock %}
 
-    {% if user.is_authenticated %}
-        <p>Jesteś zalogowany jako: <strong>{{ user.username }}</strong></p>
-        <p>Twoja rola: <strong>{{ user.get_role_display|default:"Brak roli" }}</strong></p> {# Używamy filtra default #}
 
-        <hr>
-        <p>Dostępne sekcje dla Twojej roli (zgodnie z menu):</p>
-        <ul>
-            {% if user.role == 'ADMIN' or user.is_superuser %}<li>Sekcja Administracji (dostępna w menu)</li>{% endif %}
-            {% if user.role == 'PRAWNIK' or user.is_superuser %}<li>Sekcja Prawnika (dostępna w menu)</li>{% endif %}
-            {% if user.role == 'OBSLUGA' or user.is_superuser %}<li>Sekcja Obsługi Administracyjnej (dostępna w menu)</li>{% endif %}
-            {% if user.role == 'RADA' or user.is_superuser %}<li>Sekcja Rady (dostępna w menu)</li>{% endif %}
-            {% if not user.role and not user.is_superuser %}<li>Nie masz przypisanej roli do specjalnych sekcji.</li>{% endif %}
-        </ul>
+{% block content %}
+    {# Możesz zostawić powitanie lub je usunąć/zmienić #}
+    {# <h1>{{ welcome_message }}</h1> #}
 
+    <h2 class="mb-4">Najnowsze zmiany w projekcie (Aktualności)</h2>
+
+    {% if commits %}
+        {% for commit in commits %}
+            <div class="card mb-3 commit-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h5 class="card-title mb-1">Autor: {{ commit.author }}</h5>
+                            {# Używamy filtra date do sformatowania daty #}
+                            <small class="text-muted">Data: {{ commit.date|date:"Y-m-d H:i" }}</small>
+                        </div>
+                        <span class="commit-sha badge bg-light text-dark border">
+                            {{ commit.sha|slice:":7" }} {# Wyświetlamy pierwsze 7 znaków SHA #}
+                        </span>
+                    </div>
+                    <p class="card-text commit-message-preview">
+                        {{ commit.message }}
+                    </p>
+                    {# Można dodać link do commita na GitHubie, jeśli mamy URL #}
+                    {# <a href="{{ commit.html_url }}" class="btn btn-sm btn-outline-primary" target="_blank">Zobacz na GitHub</a> #}
+                </div>
+            </div>
+        {% endfor %}
     {% else %}
-        <p>Aby uzyskać dostęp do funkcji systemu, <a href="{% url 'login' %}">zaloguj się</a>.</p>
+        <div class="alert alert-info" role="alert">
+            Brak informacji o ostatnich zmianach lub nie udało się ich pobrać.
+        </div>
     {% endif %}
+
 {% endblock %}

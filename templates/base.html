@@ -12,19 +12,12 @@
     <style>
         /* Dodatkowe, drobne style */
         body { padding-top: 56px; /* Dostosuj, jeśli navbar ma stałą wysokość */ }
-        .content-wrapper { padding: 20px; }
+        .content-wrapper { padding: 20px; min-height: calc(100vh - 56px - 58px); /* Przykładowe obliczenie min-height jeśli footer ma stałą wysokość */ }
         /* Styl dla aktywnego linku w menu */
         .nav-link.active { font-weight: bold; }
-         /* Styl dla wyszarzonego/nieaktywnego linku w menu */
-        .nav-link.disabled {
-            color: rgba(255, 255, 255, 0.5) !important; /* Jaśniejszy szary na ciemnym tle */
-            pointer-events: none; /* Wyłącza kliknięcia domyślnie, ale onclick nadal działa */
-            cursor: not-allowed; /* Zmiana kursora */
-        }
-         /* Upewnij się, że dropdown dla disabled też jest ograniczony */
-         .dropdown-toggle.disabled::after {
-             opacity: 0.5;
-         }
+         /* Styl dla wyszarzonego/nieaktywnego linku w menu - USUNIĘTY, bo linki mają być aktywne */
+        /* .nav-link.disabled { ... } */
+         /* .dropdown-toggle.disabled::after { ... } */
 
     </style>
     {% block extra_head %}{% endblock %}
@@ -45,99 +38,98 @@
                 <li class="nav-item">
                     <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" aria-current="page" href="{% url 'home' %}">AKTUALNOŚCI</a>
                 </li>
-
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="katalogMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         KATALOG
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="katalogMenuLink">
-                        <li><a class="dropdown-item" href="#">Szukaj osób</a></li> {# Placeholder #}
-                        <li><a class="dropdown-item" href="#">Szukaj dokumentów</a></li> {# Placeholder #}
+                        <li><a class="dropdown-item" href="#">Szukaj osób</a></li>
+                        <li><a class="dropdown-item" href="#">Szukaj dokumentów</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#">Inne wyszukiwania</a></li> {# Placeholder #}
+                        <li><a class="dropdown-item" href="#">Inne wyszukiwania</a></li>
                     </ul>
                 </li>
-
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="mojUaisMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         MÓJ UAIS
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="mojUaisMenuLink">
-                        <li><a class="dropdown-item" href="#">Podgląd roli</a></li> {# Placeholder #}
-                        <li><a class="dropdown-item" href="#">Moje dane</a></li> {# Placeholder #}
-                        <li><a class="dropdown-item" href="#">Ustawienia</a></li> {# Placeholder #}
+                        <li><a class="dropdown-item" href="#">Podgląd roli</a></li>
+                        <li><a class="dropdown-item" href="#">Moje dane</a></li>
+                        <li><a class="dropdown-item" href="#">Ustawienia</a></li>
                     </ul>
                 </li>
 
-                {# Używamy user.Role.PRAWNIK i user.Role.ADMIN zakładając, że Role jest zdefiniowane w modelu User #}
-                {% with allowed_roles=user.Role.PRAWNIK|stringformat:"s,"|add:user.Role.ADMIN %}
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle {% if user.role not in allowed_roles and not user.is_superuser %}disabled{% endif %}"
-                       href="#"
-                       id="kancelariaMenuLink"
-                       role="button"
-                       data-bs-toggle="{% if user.role in allowed_roles or user.is_superuser %}dropdown{% else %}# static - zapobiega otwarciu dropdownu {% endif %}"
-                       aria-expanded="false"
-                       {% if user.role not in allowed_roles and not user.is_superuser %}
-                       aria-disabled="true"
-                       tabindex="-1"
-                       title="Dostęp tylko dla roli PRAWNIK"
-                       onclick="showAccessDeniedAlert('KANCELARIA', '{% if user.role %}{{ user.get_role_display }}{% else %}Brak Roli{% endif %}'); return false;"
-                       {% endif %}>
-                        KANCELARIA
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="kancelariaMenuLink">
-                        <li><a class="dropdown-item" href="#">Dokumenty prawne</a></li> {# Placeholder #}
-                        <li><a class="dropdown-item" href="#">Opinie</a></li> {# Placeholder #}
-                    </ul>
-                </li>
-                {% endwith %}
+                {# --- POCZĄTEK SEKCJI TYLKO DLA ZALOGOWANYCH --- #}
+                {% if user.is_authenticated %}
 
-                {% with allowed_roles=user.Role.OBSLUGA|stringformat:"s,"|add:user.Role.ADMIN %}
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle {% if user.role not in allowed_roles and not user.is_superuser %}disabled{% endif %}"
-                       href="#"
-                       id="administracjaMenuLink"
-                       role="button"
-                       data-bs-toggle="{% if user.role in allowed_roles or user.is_superuser %}dropdown{% else %}# static {% endif %}"
-                       aria-expanded="false"
-                       {% if user.role not in allowed_roles and not user.is_superuser %}
-                       aria-disabled="true"
-                       tabindex="-1"
-                       title="Dostęp tylko dla roli OBSŁUGA ADMINISTRACYJNA"
-                       onclick="showAccessDeniedAlert('ADMINISTRACJA', '{% if user.role %}{{ user.get_role_display }}{% else %}Brak Roli{% endif %}'); return false;"
-                       {% endif %}>
-                        ADMINISTRACJA
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="administracjaMenuLink">
-                        <li><a class="dropdown-item" href="#">Zarządzanie kadrami</a></li> {# Placeholder #}
-                        <li><a class="dropdown-item" href="#">Obsługa studentów</a></li> {# Placeholder #}
-                    </ul>
-                </li>
-                 {% endwith %}
+                    {# Zakładamy, że wewnętrzna wartość roli prawnika to 'PRAWNIK' #}
+                    {% with allowed_roles=user.Role.PRAWNIK|stringformat:"s,"|add:user.Role.ADMIN %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" {# Usunięto 'disabled' #}
+                           href="#"
+                           id="kancelariaMenuLink"
+                           role="button"
+                           data-bs-toggle="dropdown" {# Zawsze 'dropdown' #}
+                           aria-expanded="false"
+                           {% if user.role not in allowed_roles and not user.is_superuser %}
+                           title="Dostęp tylko dla roli Radca prawny" {# Użyto display name w title #}
+                           onclick="showAccessDeniedAlert('KANCELARIA', '{% if user.role %}{{ user.get_role_display }}{% else %}Brak Roli{% endif %}'); return false;"
+                           {% endif %}>
+                            KANCELARIA
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="kancelariaMenuLink">
+                            <li><a class="dropdown-item" href="#">Dokumenty prawne</a></li>
+                            <li><a class="dropdown-item" href="#">Opinie</a></li>
+                        </ul>
+                    </li>
+                    {% endwith %}
 
-                {% with allowed_roles=user.Role.RADA|stringformat:"s,"|add:user.Role.ADMIN %}
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle {% if user.role not in allowed_roles and not user.is_superuser %}disabled{% endif %}"
-                       href="#"
-                       id="radaMenuLink"
-                       role="button"
-                       data-bs-toggle="{% if user.role in allowed_roles or user.is_superuser %}dropdown{% else %}# static {% endif %}"
-                       aria-expanded="false"
-                       {% if user.role not in allowed_roles and not user.is_superuser %}
-                       aria-disabled="true"
-                       tabindex="-1"
-                       title="Dostęp tylko dla roli RADA"
-                       onclick="showAccessDeniedAlert('RADA', '{% if user.role %}{{ user.get_role_display }}{% else %}Brak Roli{% endif %}'); return false;"
-                       {% endif %}>
-                        RADA
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="radaMenuLink">
-                        <li><a class="dropdown-item" href="#">Harmonogram spotkań</a></li> {# Placeholder #}
-                        <li><a class="dropdown-item" href="#">Protokoły</a></li> {# Placeholder #}
-                    </ul>
-                </li>
-                 {% endwith %}
+                    {# Zakładamy, że wewnętrzna wartość roli obsługi to 'OBSLUGA' #}
+                     {% with allowed_roles=user.Role.OBSLUGA|stringformat:"s,"|add:user.Role.ADMIN %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" {# Usunięto 'disabled' #}
+                           href="#"
+                           id="administracjaMenuLink"
+                           role="button"
+                           data-bs-toggle="dropdown" {# Zawsze 'dropdown' #}
+                           aria-expanded="false"
+                           {% if user.role not in allowed_roles and not user.is_superuser %}
+                           title="Dostęp tylko dla roli Obsługa administracyjna" {# Użyto display name w title #}
+                           onclick="showAccessDeniedAlert('ADMINISTRACJA', '{% if user.role %}{{ user.get_role_display }}{% else %}Brak Roli{% endif %}'); return false;"
+                           {% endif %}>
+                            ADMINISTRACJA
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="administracjaMenuLink">
+                            <li><a class="dropdown-item" href="#">Zarządzanie kadrami</a></li>
+                            <li><a class="dropdown-item" href="#">Obsługa studentów</a></li>
+                        </ul>
+                    </li>
+                     {% endwith %}
+
+                    {# Zakładamy, że wewnętrzna wartość roli rady to 'RADA' #}
+                     {% with allowed_roles=user.Role.RADA|stringformat:"s,"|add:user.Role.ADMIN %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" {# Usunięto 'disabled' #}
+                           href="#"
+                           id="radaMenuLink"
+                           role="button"
+                           data-bs-toggle="dropdown" {# Zawsze 'dropdown' #}
+                           aria-expanded="false"
+                           {% if user.role not in allowed_roles and not user.is_superuser %}
+                           title="Dostęp tylko dla roli Członek rady wydziału" {# Użyto display name w title #}
+                           onclick="showAccessDeniedAlert('RADA', '{% if user.role %}{{ user.get_role_display }}{% else %}Brak Roli{% endif %}'); return false;"
+                           {% endif %}>
+                            RADA
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="radaMenuLink">
+                            <li><a class="dropdown-item" href="#">Harmonogram spotkań</a></li>
+                            <li><a class="dropdown-item" href="#">Protokoły</a></li>
+                        </ul>
+                    </li>
+                     {% endwith %}
+
+                {% endif %} {# --- KONIEC SEKCJI TYLKO DLA ZALOGOWANYCH --- #}
 
             </ul><ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
                 {% if user.is_authenticated %}
@@ -148,11 +140,16 @@
                     </li>
                     <li class="nav-item">
                         <span class="text-secondary me-2">|</span>
-                        <a class="nav-link d-inline" href="{% url 'logout' %}">wyloguj się</a>
+                        {# Używamy formularza zamiast linku #}
+                        <form class="d-inline" method="post" action="{% url 'logout' %}">
+                            {% csrf_token %} {# Kluczowe dla POST w Django #}
+                            <button type="submit" class="btn btn-link nav-link d-inline p-0 m-0 align-baseline"> {# Stylujemy przycisk jak link #}
+                                wyloguj się
+                            </button>
+                        </form>
                     </li>
                 {% else %}
                     <li class="nav-item">
-                        {# Zakładamy, że 'login' to nazwa URL strony logowania #}
                         <a class="nav-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}" href="{% url 'login' %}">Zaloguj się</a>
                     </li>
                 {% endif %}
@@ -177,8 +174,7 @@
 {% block extra_scripts %}
 <script>
     function showAccessDeniedAlert(sectionName, userRole) {
-        // Lepszy komunikat
-        alert(`Dostęp do sekcji '${sectionName}' jest ograniczony.\nTwoja rola '${userRole}' nie posiada wymaganych uprawnień.`);
+        alert(`Ten kontent ('${sectionName}') jest niedostępny dla Twojej roli ('${userRole}').\nSkontaktuj się z administratorem serwisu, jeśli uważasz, że to błąd.`);
     }
 </script>
 {% endblock %}
