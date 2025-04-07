@@ -1,0 +1,26 @@
+{% extends 'base.html' %} {# Dziedziczymy po base.html #}
+
+{% block title %}Strona Główna - UAIS{% endblock %} {# Nadpisujemy tytuł #}
+
+{% block content %} {# Nadpisujemy blok content #}
+    <h1>{{ welcome_message }}</h1>
+    <p>To jest główna strona aplikacji.</p>
+
+    {% if user.is_authenticated %}
+        <p>Jesteś zalogowany jako: <strong>{{ user.username }}</strong></p>
+        <p>Twoja rola: <strong>{{ user.get_role_display|default:"Brak roli" }}</strong></p> {# Używamy filtra default #}
+
+        <hr>
+        <p>Dostępne sekcje dla Twojej roli (zgodnie z menu):</p>
+        <ul>
+            {% if user.role == 'ADMIN' or user.is_superuser %}<li>Sekcja Administracji (dostępna w menu)</li>{% endif %}
+            {% if user.role == 'PRAWNIK' or user.is_superuser %}<li>Sekcja Prawnika (dostępna w menu)</li>{% endif %}
+            {% if user.role == 'OBSLUGA' or user.is_superuser %}<li>Sekcja Obsługi Administracyjnej (dostępna w menu)</li>{% endif %}
+            {% if user.role == 'RADA' or user.is_superuser %}<li>Sekcja Rady (dostępna w menu)</li>{% endif %}
+            {% if not user.role and not user.is_superuser %}<li>Nie masz przypisanej roli do specjalnych sekcji.</li>{% endif %}
+        </ul>
+
+    {% else %}
+        <p>Aby uzyskać dostęp do funkcji systemu, <a href="{% url 'login' %}">zaloguj się</a>.</p>
+    {% endif %}
+{% endblock %}

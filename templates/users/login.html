@@ -1,0 +1,90 @@
+{% extends 'base.html' %} {# Dziedziczymy po base.html #}
+
+{% block title %}Logowanie - UAIS{% endblock %} {# Nadpisujemy tytuł #}
+
+{% block content %} {# Nadpisujemy blok content #}
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4"> {# Używamy kolumn Bootstrapa dla lepszego wyglądu #}
+            <h1 class="text-center mb-4">Logowanie do systemu UAIS</h1>
+
+            <form method="post" novalidate> {# novalidate wyłącza domyślną walidację HTML5 przeglądarki #}
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="mb-3"> {# Używamy klas Bootstrapa dla pól formularza #}
+                    <label for="{{ form.username.id_for_label }}" class="form-label">{{ form.username.label_tag }}</label>
+                    <input type="{{ form.username.field.widget.input_type }}"
+                           name="{{ form.username.name }}"
+                           id="{{ form.username.id_for_label }}"
+                           class="form-control {% if form.username.errors %}is-invalid{% endif %}" {# Dodajemy klasę is-invalid jeśli są błędy #}
+                           placeholder="Nazwa użytkownika lub Email"
+                           required {% comment %} Django Forms dodaje 'required' automatycznie, ale można też tu {% endcomment %}
+                           value="{{ form.username.value|default_if_none:'' }}">
+                    {% if form.username.errors %}
+                        <div class="invalid-feedback"> {# Komunikat o błędzie dla Bootstrapa #}
+                            {% for error in form.username.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.password.id_for_label }}" class="form-label">{{ form.password.label_tag }}</label>
+                     <div class="input-group"> {# Używamy input-group dla ikonki oka #}
+                        <input type="{{ form.password.field.widget.input_type }}"
+                               name="{{ form.password.name }}"
+                               id="{{ form.password.id_for_label }}"
+                               class="form-control {% if form.password.errors %}is-invalid{% endif %}"
+                               placeholder="Hasło"
+                               required>
+                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('{{ form.password.id_for_label }}', this)">
+                            <i class="bi bi-eye-slash-fill"></i> {# Ikona Bootstrapa #}
+                        </button>
+                         {% if form.password.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.password.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                         {% else %}
+                           {# Można dodać podpowiedź, jeśli nie ma błędu #}
+                         {% endif %}
+                     </div>
+                </div>
+
+                <div class="d-grid gap-2"> {# Przycisk na całą szerokość #}
+                    <button type="submit" class="btn btn-primary">Zaloguj się</button>
+                </div>
+            </form>
+             <p class="mt-3 text-center"> <a href="#">Zapomniałeś hasła?</a> </p> {# Placeholder #}
+        </div>
+    </div>
+
+    {# Przenosimy skrypt JS do bloku extra_scripts dla porządku #}
+{% endblock %}
+
+{% block extra_scripts %}
+    <script>
+        function togglePasswordVisibility(fieldId, button) {
+            const passwordField = document.getElementById(fieldId);
+            const icon = button.querySelector('i'); // Znajdź ikonę wewnątrz przycisku
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                icon.classList.remove('bi-eye-slash-fill'); // Zmień klasę ikony
+                icon.classList.add('bi-eye-fill');
+            } else {
+                passwordField.type = "password";
+                icon.classList.remove('bi-eye-fill');
+                icon.classList.add('bi-eye-slash-fill');
+            }
+        }
+    </script>
+{% endblock %}
