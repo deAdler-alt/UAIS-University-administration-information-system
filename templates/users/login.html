@@ -3,13 +3,10 @@
 
 {% block title %}Logowanie - UAIS{% endblock %}
 
-{# Dodajemy blok na style specyficzne dla tej strony #}
-
 {% block extra_head %}
 <style>
 
     body {
-        /* Bardziej intensywny niebieski/navy jako tło */
         background-color: #0d2d52 !important;
         display: flex;
         flex-direction: column;
@@ -29,12 +26,11 @@
         max-width: 500px;
         width: 100%;
         background-color: #FFFFFF;
-        /* Łagodniejsza ramka lub jej brak, ale z wyraźnym cieniem */
-        border: 1px solid #d1d1d1; /* Jasnoszara, subtelna ramka */
-        border-radius: 8px; /* Bardziej zaokrąglone rogi */
-        padding: 35px 40px; /* Dostosowany padding */
+        border: 1px solid #d1d1d1; 
+        border-radius: 8px;
+        padding: 35px 40px;
         color: #000000;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15); /* Wyraźniejszy cień */
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15); 
     }
 
     .login-container h1,
@@ -43,52 +39,49 @@
         text-align: center;
         color: #000000;
     }
-    /* Precyzyjne dopasowanie rozmiarów i odstępów nagłówków */
     .login-container h1 { font-size: 26px; font-weight: 600; margin-bottom: 8px; }
     .login-container h2 { font-size: 18px; font-weight: 400; margin-bottom: 15px; color: #333; }
     .login-container h3 { font-size: 16px; font-weight: 500; margin-bottom: 30px; color: #111; }
 
     .login-container .form-label {
-        font-weight: 600; /* Grubsza etykieta */
+        font-weight: 600;
         font-size: 14px;
         color: #000000;
         margin-bottom: 5px;
     }
 
     .login-container .form-control {
-        border-radius: 4px; /* Lekko zaokrąglone */
-        border: 1px solid #ced4da; /* Standardowa ramka Bootstrapa */
+        border-radius: 4px;
+        border: 1px solid #ced4da; 
         padding: 10px 12px;
         font-size: 14px;
         color: #000000;
-        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out; /* Standardowa animacja Bootstrapa */
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
     }
-     /* Styl przy focusie - subtelny niebieski */
+
     .login-container .form-control:focus {
         border-color: #86b7fe;
         outline: 0;
         box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
     }
 
-    /* Styl pola w stanie błędu */
     .login-container .form-control.is-invalid {
-        border-color: #dc3545 !important; /* Czerwona ramka - ważne, by nadpisać */
-        background-image: none; /* Bez ikonki w tle */
+        border-color: #dc3545 !important; 
+        background-image: none;
     }
     .login-container .form-control.is-invalid:focus {
          border-color: #dc3545;
-         box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25); /* Czerwony cień przy focusie */
-    }
-    /* Komunikat o błędzie pod polem */
-    .login-container .invalid-feedback {
-        color: #dc3545;
-        font-size: 13px; /* Czytelny rozmiar */
-        text-align: left;
-        margin-top: 4px;
-        display: block; /* Zawsze widoczny, gdy jest klasa is-invalid */
+         box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
     }
 
-    /* Komunikat ogólny (np. złe hasło) */
+    .login-container .invalid-feedback {
+        color: #dc3545;
+        font-size: 13px;
+        text-align: left;
+        margin-top: 4px;
+        display: block; 
+    }
+
      .login-container .alert-danger {
         background-color: #f8d7da;
         border-color: #f5c6cb;
@@ -100,71 +93,67 @@
         border-radius: 4px;
      }
 
-    /* Przycisk oka - dostosowanie do wyglądu ze zrzutu */
     .login-container .password-toggle-btn {
-        border: 1px solid #ced4da; /* Taka sama ramka jak input */
-        border-left: none; /* Usuwamy lewą ramkę, by przylegał do pola */
-        background-color: #ffffff; /* Białe tło */
-        color: #003087; /* Granatowa ikonka */
-        padding: 0 10px; /* Padding poziomy */
+        border: 1px solid #ced4da;
+        border-left: none; 
+        background-color: #ffffff; 
+        color: #003087; 
+        padding: 0 10px; 
     }
      .login-container .password-toggle-btn:hover {
          background-color: #f1f1f1;
      }
      .login-container .password-toggle-btn i {
-         font-size: 1.2rem; /* Nieco większa ikonka */
-         vertical-align: middle; /* Lepsze wyrównanie pionowe */
+         font-size: 1.2rem; 
+         vertical-align: middle; 
      }
-     /* Dostosowanie zaokrąglenia przy grupie */
+
      .login-container .input-group .form-control { border-right: none; }
-     .login-container .input-group .form-control:focus { box-shadow: none; } /* Usuwamy cień przy focusie na polu, gdy jest przycisk */
+     .login-container .input-group .form-control:focus { box-shadow: none; } 
      .login-container .input-group > :not(:last-child):not(.dropdown-toggle):not(.dropdown-menu) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
      .login-container .input-group > :not(:first-child):not(.dropdown-menu):not(.valid-tooltip):not(.valid-feedback):not(.invalid-tooltip):not(.invalid-feedback) { border-top-left-radius: 0; border-bottom-left-radius: 0; }
 
 
-    /* Przycisk logowania - styl ze zrzutu */
     .login-container .btn-login {
-        background-color: #003087; /* Główny kolor navy */
+        background-color: #003087; 
         color: #FFFFFF;
-        font-weight: 600; /* Grubszy font */
-        padding: 10px 15px; /* Dostosowany padding */
+        font-weight: 600; 
+        padding: 10px 15px; 
         border: none;
-        border-radius: 5px; /* Lekko zaokrąglone rogi */
+        border-radius: 5px; 
         width: 100%;
         cursor: pointer;
         transition: background-color 0.2s ease-in-out;
         font-size: 16px;
-        text-transform: uppercase; /* Wielkie litery */
-        margin-top: 10px; /* Odstęp nad przyciskiem */
+        text-transform: uppercase; 
+        margin-top: 10px; 
     }
     .login-container .btn-login:hover {
-        background-color: #002060; /* Ciemniejszy odcień */
+        background-color: #002060; 
         color: #FFFFFF;
     }
 
-     /* Linia horyzontalna */
      .login-container hr {
-         margin-top: 25px; /* Odstęp nad linią */
-         margin-bottom: 0; /* Brak odstępu pod linią */
-         border-color: #e0e0e0; /* Jaśniejszy kolor linii */
+         margin-top: 25px; 
+         margin-bottom: 0; 
+         border-color: #e0e0e0; 
      }
 
-    /* --- Style dla stopki i ukrywania elementów z base.html --- */
      body > .navbar { display: none !important; }
      body > footer { display: none !important; }
 
      .footer-bar {
-         border-top: none; /* Bez górnej ramki */
-         background-color: #0d2d52; /* Taki sam kolor jak tło body */
+         border-top: none; 
+         background-color: #0d2d52; 
          color: #ffffff;
          text-align: center;
-         padding: 15px; /* Trochę więcej paddingu */
+         padding: 15px; 
          width: 100%;
          margin-top: auto;
-         box-shadow: 0 -3px 6px rgba(0, 0, 0, 0.1); /* Cień na górze stopki */
+         box-shadow: 0 -3px 6px rgba(0, 0, 0, 0.1); 
      }
      .footer-bar p { margin: 0; font-size: 13px; }
-     .footer-bar a { color: #aedff7; text-decoration: underline; } /* Jaśniejszy niebieski dla linków */
+     .footer-bar a { color: #aedff7; text-decoration: underline; } 
      .footer-bar a:hover { color: #ffffff; }
 
 </style>
@@ -196,15 +185,12 @@
                    class="form-control {% if form.username.errors or form.non_field_errors %}is-invalid{% endif %}" {# Dodajemy is-invalid także przy non_field_errors #}
                    required
                    value="{{ form.username.value|default_if_none:'' }}">
-            {# Komunikat o błędzie specyficzny dla pola username/email #}
             {% if form.username.errors %}
                 <div class="invalid-feedback">
                     {% for error in form.username.errors %}
                         {{ error }}
                     {% endfor %}
                 </div>
-             {# Dodajemy komunikat "pole wymagane", jeśli błędu nie ma, ale pole jest puste (opcjonalne, bo Django da błąd) #}
-             {# Można by to obsłużyć JS, ale polegajmy na błędach Django #}
             {% endif %}
         </div>
 
@@ -219,7 +205,6 @@
                 <button class="btn btn-outline-secondary password-toggle-btn" type="button" onclick="togglePasswordVisibility('{{ form.password.id_for_label }}', this)">
                     <i class="bi bi-eye-slash-fill"></i>
                 </button>
-                {# Komunikat o błędzie specyficzny dla pola hasła #}
                 {% if form.password.errors %}
                     <div class="invalid-feedback d-block">
                         {% for error in form.password.errors %}
@@ -232,13 +217,11 @@
 
         <button type="submit" class="btn btn-login">Zaloguj się</button>
 
-        <hr> {# Dodana linia pozioma #}
+        <hr>
 
     </form>
-    {# Usunięty link "Zapomniałeś hasła?" #}
 </div>
 
-{# Stopka z Twojego przykładu - przeniesiona tutaj z poprzedniej wersji #}
 <div class="footer-bar">
     <p>
         Copyright © 2025
@@ -251,7 +234,6 @@
 
 
 {% block extra_scripts %}
-{# Skrypt do przełączania widoczności hasła - bez zmian #}
 <script>
     function togglePasswordVisibility(fieldId, button) {
         const passwordField = document.getElementById(fieldId);

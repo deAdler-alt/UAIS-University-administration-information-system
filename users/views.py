@@ -1,15 +1,12 @@
-# users/views.py
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
-# @login_required
 def home_view(request):
-    # Przykładowe dane commitów (zastąpimy je później danymi z API)
     dummy_commits = [
         {
             'sha': 'a1b2c3d4',
             'author': 'Jan Kowalski',
-            'date': '2025-04-07T10:30:00Z', # Format ISO 8601
+            'date': '2025-04-07T10:30:00Z',
             'message': 'Fix: Poprawiono błąd walidacji w formularzu 217.'
         },
         {
