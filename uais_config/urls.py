@@ -15,12 +15,17 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+# uais_config/urls.py
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include # Upewnij się, że include jest zaimportowane
 from users import views as user_views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('accounts/', include('users.urls')), 
+    path('admin/', admin.site.urls), # Standardowy admin Django
+    path('accounts/', include('users.urls')), # Logowanie/Wylogowanie lokalne 
+    # path('accounts/', include('django_cas_ng.urls')), # Logowanie CAS (potem)
     path('', user_views.home_view, name='home'),
+
+    # Nowa ścieżka do panelu zarządzania w aplikacji
+    path('manage/', include('management.urls', namespace='management')),
 ]

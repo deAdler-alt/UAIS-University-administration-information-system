@@ -11,8 +11,24 @@
 
     <style>
         body { padding-top: 56px; }
-        .content-wrapper { padding: 20px; min-height: calc(100vh - 56px - 58px); }
+        .content-wrapper { padding: 20px; min-height: calc(100vh - 56px - 58px); /* Dostosuj wysokość stopki (58px?) jeśli jest stała */ }
         .nav-link.active { font-weight: bold; }
+
+        /* --- POPRAWKA CSS --- */
+        /* Dodajemy styl dla disabled, jeśli Bootstrap domyślnie go nie wyszarza wystarczająco na ciemnym tle */
+        .navbar-dark .navbar-nav .nav-link.disabled {
+             color: rgba(255, 255, 255, 0.5) !important; /* Jaśniejszy szary na ciemnym tle */
+        }
+        /* Przywracamy możliwość klikania dla wyszarzonych linków dropdown w navbarze */
+        .navbar-nav .nav-item .nav-link.dropdown-toggle.disabled {
+            pointer-events: auto !important; /* Nadpisuje styl Bootstrapa, przywraca klikalność */
+            cursor: pointer; /* Zmiana kursora z 'not-allowed' na standardowy */
+        }
+         /* Upewnij się, że strzałka dropdown dla disabled też jest wyszarzona */
+         .navbar-dark .navbar-nav .dropdown-toggle.disabled::after {
+             opacity: 0.5;
+         }
+         /* --- KONIEC POPRAWKI CSS --- */
 
     </style>
     {% block extra_head %}{% endblock %}
@@ -29,6 +45,7 @@
 
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
+                {# Sekcje zawsze dostępne #}
                 <li class="nav-item">
                     <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" aria-current="page" href="{% url 'home' %}">AKTUALNOŚCI</a>
                 </li>
@@ -54,18 +71,44 @@
                     </ul>
                 </li>
 
+                {# Sekcje tylko dla zalogowanych z kontrolą dostępu #}
                 {% if user.is_authenticated %}
+
+                    {% with allowed_roles=user.Role.ADMIN %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if user.role != user.Role.ADMIN and not user.is_superuser %}disabled{% endif %}" {# Dodajemy 'disabled' dla stylu #}
+                           href="#"
+                           id="managementMenuLink"
+                           role="button"
+                           data-bs-toggle="dropdown" {# Zawsze dropdown #}
+                           aria-expanded="false"
+                           {% if user.role != user.Role.ADMIN and not user.is_superuser %}
+                           aria-disabled="true" {# Dla semantyki #}
+                           title="Dostęp tylko dla roli Administrator"
+                           onclick="showAccessDeniedAlert('ZARZĄDZANIE', '{% if user.role %}{{ user.get_role_display }}{% else %}Brak Roli{% endif %}'); return false;"
+                           {% endif %}>
+                            ZARZĄDZANIE
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="managementMenuLink">
+                            <li><a class="dropdown-item" href="{% url 'management:user_list' %}">Zarządzaj Użytkownikami</a></li>
+                            <li><a class="dropdown-item" href="#">Zarządzaj Rolami (TODO)</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/admin/">Stary Panel Admina Django</a></li>
+                        </ul>
+                    </li>
+                    {% endwith %}
 
                     {% with allowed_roles=user.Role.PRAWNIK|stringformat:"s,"|add:user.Role.ADMIN %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" {# Usunięto 'disabled' #}
+                        <a class="nav-link dropdown-toggle {% if user.role not in allowed_roles and not user.is_superuser %}disabled{% endif %}" {# Dodajemy 'disabled' dla stylu #}
                            href="#"
                            id="kancelariaMenuLink"
                            role="button"
-                           data-bs-toggle="dropdown" {# Zawsze 'dropdown' #}
+                           data-bs-toggle="dropdown" {# Zawsze dropdown #}
                            aria-expanded="false"
                            {% if user.role not in allowed_roles and not user.is_superuser %}
-                           title="Dostęp tylko dla roli Radca prawny" {# Użyto display name w title #}
+                           aria-disabled="true" {# Dla semantyki #}
+                           title="Dostęp tylko dla roli Radca prawny"
                            onclick="showAccessDeniedAlert('KANCELARIA', '{% if user.role %}{{ user.get_role_display }}{% else %}Brak Roli{% endif %}'); return false;"
                            {% endif %}>
                             KANCELARIA
@@ -77,16 +120,17 @@
                     </li>
                     {% endwith %}
 
-                     {% with allowed_roles=user.Role.OBSLUGA|stringformat:"s,"|add:user.Role.ADMIN %}
+                    {% with allowed_roles=user.Role.OBSLUGA|stringformat:"s,"|add:user.Role.ADMIN %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" {# Usunięto 'disabled' #}
+                        <a class="nav-link dropdown-toggle {% if user.role not in allowed_roles and not user.is_superuser %}disabled{% endif %}" {# Dodajemy 'disabled' dla stylu #}
                            href="#"
                            id="administracjaMenuLink"
                            role="button"
-                           data-bs-toggle="dropdown" {# Zawsze 'dropdown' #}
+                           data-bs-toggle="dropdown" {# Zawsze dropdown #}
                            aria-expanded="false"
                            {% if user.role not in allowed_roles and not user.is_superuser %}
-                           title="Dostęp tylko dla roli Obsługa administracyjna" 
+                           aria-disabled="true" {# Dla semantyki #}
+                           title="Dostęp tylko dla roli Pomoc administracyjna"
                            onclick="showAccessDeniedAlert('ADMINISTRACJA', '{% if user.role %}{{ user.get_role_display }}{% else %}Brak Roli{% endif %}'); return false;"
                            {% endif %}>
                             ADMINISTRACJA
@@ -98,16 +142,17 @@
                     </li>
                      {% endwith %}
 
-                     {% with allowed_roles=user.Role.RADA|stringformat:"s,"|add:user.Role.ADMIN %}
+                    {% with allowed_roles=user.Role.RADA|stringformat:"s,"|add:user.Role.ADMIN %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle"
+                        <a class="nav-link dropdown-toggle {% if user.role not in allowed_roles and not user.is_superuser %}disabled{% endif %}" {# Dodajemy 'disabled' dla stylu #}
                            href="#"
                            id="radaMenuLink"
                            role="button"
-                           data-bs-toggle="dropdown"
+                           data-bs-toggle="dropdown" {# Zawsze dropdown #}
                            aria-expanded="false"
                            {% if user.role not in allowed_roles and not user.is_superuser %}
-                           title="Dostęp tylko dla roli Członek rady wydziału" 
+                           aria-disabled="true" {# Dla semantyki #}
+                           title="Dostęp tylko dla roli Zarząd Rady Dyscypliny"
                            onclick="showAccessDeniedAlert('RADA', '{% if user.role %}{{ user.get_role_display }}{% else %}Brak Roli{% endif %}'); return false;"
                            {% endif %}>
                             RADA
@@ -119,7 +164,7 @@
                     </li>
                      {% endwith %}
 
-                {% endif %}
+                {% endif %} {# Koniec sekcji tylko dla zalogowanych #}
 
             </ul><ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
                 {% if user.is_authenticated %}
@@ -131,8 +176,8 @@
                     <li class="nav-item">
                         <span class="text-secondary me-2">|</span>
                         <form class="d-inline" method="post" action="{% url 'logout' %}">
-                            {% csrf_token %} {# Kluczowe dla POST w Django #}
-                            <button type="submit" class="btn btn-link nav-link d-inline p-0 m-0 align-baseline"> {# Stylujemy przycisk jak link #}
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-link nav-link d-inline p-0 m-0 align-baseline">
                                 wyloguj się
                             </button>
                         </form>
@@ -160,7 +205,8 @@
 {% block extra_scripts %}
 <script>
     function showAccessDeniedAlert(sectionName, userRole) {
-        alert(`Ten kontent ('${sectionName}') jest niedostępny dla Twojej roli ('${userRole}').\nSkontaktuj się z administratorem serwisu, jeśli uważasz, że to błąd.`);
+        // Używamy poprawionej treści alertu
+        alert(`Ten kontent ('${sectionName}') jest niedostepny dla Twojej roli ('${userRole}').\nSkontaktuj się z administratorem serwisu, jeśli uważasz, że to błąd.`);
     }
 </script>
 {% endblock %}

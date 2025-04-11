@@ -1,42 +1,38 @@
-# users/admin.py
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin # Importujemy bazowy UserAdmin
-from .models import User # Importujemy nasz model User
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.utils.translation import gettext_lazy as _
+from .models import User
 
-# Możemy rozszerzyć domyślny UserAdmin, aby dodać pole 'role'
 class UserAdmin(BaseUserAdmin):
-    # Pola wyświetlane na liście użytkowników w panelu admina
-    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'role') # Dodajemy 'role'
-    # Filtry dostępne po prawej stronie listy
-    list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups', 'role') # Dodajemy 'role'
+    # Dodajemy 'rada_wydzialu' do listy wyświetlanych kolumn
+    list_display = ('email', 'username', 'first_name', 'last_name', 'is_staff', 'role', 'rada_wydzialu')
+    # Dodajemy 'rada_wydzialu' do filtrów
+    list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups', 'role', 'rada_wydzialu')
 
-    # Definicja sekcji (fieldsets) w formularzu edycji użytkownika
-    # Kopiujemy domyślne fieldsets z BaseUserAdmin i dodajemy nasze pole 'role'
-    # Możesz sprawdzić domyślne fieldsets w kodzie źródłowym Django lub dokumentacji
+    # Dodajemy 'rada_wydzialu' do sekcji pól w formularzu edycji
+    # Kopiujemy fieldsets z BaseUserAdmin i modyfikujemy/dodajemy
     fieldsets = (
-        (None, {'fields': ('username', 'password')}), # Sekcja logowania
-        ('Personal info', {'fields': ('first_name', 'last_name', 'email')}), # Dane osobowe
-        ('Permissions', { # Uprawnienia
+        (None, {'fields': ('username', 'password')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email')}),
+        (_('Permissions'), {
             'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
         }),
-        ('Important dates', {'fields': ('last_login', 'date_joined')}), # Daty
-        ('Custom Fields', {'fields': ('role',)}), # NASZA SEKCJA Z ROLĄ
+        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
+         # Dodajemy nasze pola do jednej sekcji
+        (_('Custom Fields'), {'fields': ('role', 'rada_wydzialu',)}),
     )
 
-    # Można też użyć add_fieldsets, jeśli dziedziczymy i chcemy tylko dodać sekcję
-    # add_fieldsets = (
-    #     ('Custom Fields', {'fields': ('role',)}),
-    # )
-
-    # Pola dostępne do edycji w formularzu dodawania użytkownika
-    # Kopiujemy z BaseUserAdmin i dodajemy 'role'
+    # Dodajemy 'rada_wydzialu' do sekcji pól w formularzu dodawania
+    # BaseUserAdmin.add_fieldsets zawiera już 'username', 'password', etc.
+    # Sprawdzamy czy pola już tam nie ma dla pewności (choć nie powinno być)
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
-        ('Custom Fields', {'fields': ('role',)}),
+        (_('Custom Fields'), {'fields': ('role', 'rada_wydzialu',)}),
     )
 
-    # Pola tylko do odczytu
-    # readonly_fields = ('last_login', 'date_joined') # Są już w BaseUserAdmin
+    # Definiujemy pola wyszukiwania
+    search_fields = ('email', 'username', 'first_name', 'last_name')
+    # Definiujemy kolejność
+    ordering = ('email',)
 
-
-# Rejestrujemy nasz model User z niestandardową klasą UserAdmin
+# Rejestrujemy model User z naszą klasą UserAdmin
 admin.site.register(User, UserAdmin)

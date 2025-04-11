@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Zarządzanie Użytkownikami - UAIS{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Zarządzanie Użytkownikami</h2>
+        {# Link do przyszłego widoku dodawania użytkownika #}
+        <a href="#" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Dodaj Nowego Użytkownika
+        </a>
+    </div>
+
+    {# Komunikaty systemowe (np. o braku uprawnień) #}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col">Email (Login)</th>
+                    <th scope="col">Imię</th>
+                    <th scope="col">Nazwisko</th>
+                    <th scope="col">Rola</th>
+                    <th scope="col">Rada/Jednostka</th>
+                    <th scope="col">Aktywny</th>
+                    <th scope="col">Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user_obj in users_list %} {# Używamy nazwy z context_object_name #}
+                <tr>
+                    <td>{{ user_obj.email }}</td>
+                    <td>{{ user_obj.first_name|default:"-" }}</td>
+                    <td>{{ user_obj.last_name|default:"-" }}</td>
+                    <td>{{ user_obj.get_role_display|default:"Brak" }}</td>
+                    <td>{{ user_obj.rada_wydzialu|default:"-" }}</td>
+                    <td>
+                        {% if user_obj.is_active %}
+                            <i class="bi bi-check-circle-fill text-success"></i> Tak
+                        {% else %}
+                            <i class="bi bi-x-circle-fill text-danger"></i> Nie
+                        {% endif %}
+                    </td>
+                    <td>
+                        {# Linki do przyszłych widoków edycji i usuwania #}
+                        <a href="#" class="btn btn-sm btn-warning me-1" title="Edytuj">
+                            <i class="bi bi-pencil-fill"></i>
+                        </a>
+                        <a href="#" class="btn btn-sm btn-danger" title="Usuń">
+                            <i class="bi bi-trash-fill"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">Nie znaleziono użytkowników.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# Paginacja #}
+    {% if is_paginated %}
+        <nav aria-label="Nawigacja stron">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Poprzednia">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">&laquo;</span>
+                    </li>
+                {% endif %}
+
+                {% for page_num in paginator.page_range %}
+                    {% if page_obj.number == page_num %}
+                        <li class="page-item active" aria-current="page"><span class="page-link">{{ page_num }}</span></li>
+                    {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Następna">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">&raquo;</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+
+</div>
+{% endblock %}
