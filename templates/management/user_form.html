@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title|default:"Formularz Użytkownika" }} - UAIS{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title|default:"Formularz Użytkownika" }}</h2>
+    <hr>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {# Proste renderowanie formularza za pomocą .as_p - można później ostylować pole po polu #}
+        {{ form.as_p }}
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-lg"></i> Zapisz
+            </button>
+            <a href="{% url 'management:user_list' %}" class="btn btn-secondary">
+                <i class="bi bi-x-lg"></i> Anuluj
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

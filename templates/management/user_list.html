@@ -6,8 +6,8 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Zarządzanie Użytkownikami</h2>
-        {# Link do przyszłego widoku dodawania użytkownika #}
-        <a href="#" class="btn btn-primary">
+        {# Widok dodawania użytkownika #}
+        <a href="{% url 'management:user_add' %}" class="btn btn-primary">
             <i class="bi bi-plus-circle"></i> Dodaj Nowego Użytkownika
         </a>
     </div>
@@ -51,11 +51,11 @@
                         {% endif %}
                     </td>
                     <td>
-                        {# Linki do przyszłych widoków edycji i usuwania #}
-                        <a href="#" class="btn btn-sm btn-warning me-1" title="Edytuj">
+                        <a href="{% url 'management:user_update' pk=user_obj.pk %}" class="btn btn-sm btn-warning me-1" title="Edytuj">
                             <i class="bi bi-pencil-fill"></i>
                         </a>
-                        <a href="#" class="btn btn-sm btn-danger" title="Usuń">
+                        {# Link do NOWEGO widoku usuwania użytkownika #}
+                        <a href="{% url 'management:user_delete' pk=user_obj.pk %}" class="btn btn-sm btn-danger" title="Usuń">
                             <i class="bi bi-trash-fill"></i>
                         </a>
                     </td>

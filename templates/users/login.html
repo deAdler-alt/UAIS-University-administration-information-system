@@ -216,7 +216,10 @@
         </div>
 
         <button type="submit" class="btn btn-login">Zaloguj się</button>
-
+        <hr> {# Linia pod przyciskiem Zaloguj się #}
+        <p class="text-center mt-3"> {# Dodajemy akapit pod linią #}
+            <a href="{% url 'password_reset' %}">Nie pamiętasz hasła? Zresetuj je tutaj.</a>
+        </p>
         <hr>
 
     </form>
@@ -226,7 +229,8 @@
     <p>
         Copyright © 2025
         <a href="https://github.com/GitEagly">github.com/GitEagly</a> &amp;
-        <a href="https://github.com/FiFulini">github.com/FiFulini</a>,
+        <a href="https://github.com/FiFulini">github.com/FiFulini</a> &amp;
+        <a href="http://github.com/rasto50">github.com/NixyFox</a>,
         Wszelkie prawa zastrzeżone. Powered by <a href="https://www.djangoproject.com/">Django</a>
     </p>
 </div>
