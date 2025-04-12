@@ -67,11 +67,19 @@ Serwer będzie dostępny pod adresem: [http://127.0.0.1:8000](http://127.0.0.1:8
 
 ### 6. Logowanie do panelu administracyjnego
 
-Aby uzyskać dostęp do panelu administracyjnego, utwórz superużytkownika:
+Aby uzyskać dostęp do panelu administracyjnego, możesz utworzyć superużytkownika:
 
 ```bash
 python manage.py createsuperuser
 ```
+
+**Lub możesz użyć istniejących danych logowania:**
+
+- **Email:** <Admin1@edu.pl>  
+  **Hasło:** Administrator@123  
+
+- **Email:** <admin@edu.pl>  
+  **Hasło:** passwordadmin
 
 Następnie zaloguj się pod adresem: [http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin)
 
