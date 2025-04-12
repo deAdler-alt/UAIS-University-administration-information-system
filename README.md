@@ -85,8 +85,6 @@ Następnie zaloguj się pod adresem: [http://127.0.0.1:8000/admin](http://127.0.
 
 ---
 
-## Dodatkowe informacje
-
 ### Docker (opcjonalnie)
 
 Jeśli chcesz uruchomić projekt w kontenerze Docker:
@@ -104,6 +102,16 @@ Jeśli chcesz uruchomić projekt w kontenerze Docker:
    ```
 
 Serwer będzie dostępny pod adresem: [http://127.0.0.1:8000](http://127.0.0.1:8000)
+
+**Uwaga dla użytkowników Linuxa z włączonym SELinux:**
+
+Jeśli używasz SELinux i masz problemy z dostępem do wolumenów, musisz zmienić kontekst bezpieczeństwa dla katalogu z wolumenami. Użyj poniższego polecenia, aby to zrobić:
+
+```bash
+chcon -Rt svirt_sandbox_file_t /path/to/volume
+```
+
+Zastąp `/path/to/volume` ścieżką do katalogu, który jest montowany jako wolumen w kontenerze.
 
 ---
 
