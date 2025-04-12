@@ -52,6 +52,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'uais_config.redirect_middleware.RedirectMiddleware',  # Dodaj tutaj
 ]
 
 ROOT_URLCONF = 'uais_config.urls'

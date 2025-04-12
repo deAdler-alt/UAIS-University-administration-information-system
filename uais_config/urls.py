@@ -19,6 +19,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include # Upewnij się, że include jest zaimportowane
 from users import views as user_views
+from django.http import HttpResponsePermanentRedirect
 
 urlpatterns = [
     path('admin/', admin.site.urls), # Standardowy admin Django
@@ -28,4 +29,7 @@ urlpatterns = [
 
     # Nowa ścieżka do panelu zarządzania w aplikacji
     path('manage/', include('management.urls', namespace='management')),
+    
+    # Dodaj przekierowanie dla 127.0.0.1
+    path('', lambda request: HttpResponsePermanentRedirect('/accounts/login') if request.get_host() == '127.0.0.1:8000' else None),
 ]
