@@ -1,0 +1,13 @@
+{# templates/users/emails/2fa_pin_email.txt #}
+Witaj{% if user.first_name %} {{ user.first_name }}{% endif %},
+
+Aby dokończyć logowanie do systemu UAIS, wprowadź poniższy kod weryfikacyjny:
+
+{{ pin }}
+
+Kod jest ważny przez 10 minut.
+
+Jeśli nie próbowałeś/aś się logować, zignoruj tę wiadomość.
+
+Pozdrawiamy,
+Zespół UAIS

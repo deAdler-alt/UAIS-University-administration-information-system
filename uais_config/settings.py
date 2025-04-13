@@ -11,23 +11,32 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 
-from pathlib import Path
+import environ
 import os
+from pathlib import Path
+from django.utils.translation import gettext_lazy as _
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+env = environ.Env(
+    DEBUG=(bool, False)
+)
+env_path = os.path.join(BASE_DIR, '.env')
+if os.path.exists(env_path):
+    environ.Env.read_env(env_path)
+
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-czj68xi6nyxsl2$_ejwhl*h9_q)4_u06_288v@1nj9&v($xr4m'
-
+SECRET_KEY = env('SECRET_KEY', default='django-insecure-czj68xi6nyxsl2$_ejwhl*h9_q)4_u06_288v@1nj9&v($xr4m')
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env('DEBUG') # Odczyta wartość z .env lub użyje domyślnej (False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
 
 # Application definition
@@ -75,6 +84,12 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'uais_config.wsgi.application'
+
+
+#Email obsługa - 2FA i reset
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'no-reply@uais.local'
 
 
 # Database
@@ -138,5 +153,3 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'no-reply@uais.local'

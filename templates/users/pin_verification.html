@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title|default:"Weryfikacja 2FA" }} - UAIS{% endblock %}
+
+{% block extra_head %}
+<style>
+    html, body { height: 100%; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { background-color: #0d2d52 !important; display: flex; flex-direction: column; min-height: 100vh; }
+    body > .navbar { display: none !important; }
+    body > footer { display: none !important; }
+    .auth-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px; }
+    .auth-box {
+        max-width: 450px; width: 100%; background-color: #FFFFFF;
+        border: 1px solid #d1d1d1; border-radius: 12px; padding: 35px 40px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15); color: #000; text-align: center; /* Wyśrodkowanie tekstu */
+    }
+    .auth-box h2 { font-size: 22px; font-weight: 600; margin-bottom: 15px; }
+    .auth-box p { font-size: 0.95em; color: #333; margin-bottom: 20px; }
+    .auth-box .btn-success { background-color: #198754; border-color: #198754; } /* Zielony przycisk */
+    .auth-box .btn-success:hover { background-color: #157347; border-color: #146c43; }
+    .auth-box .btn-secondary { background-color: #6c757d; border-color: #6c757d; }
+
+    /* Styl dla pól PIN */
+    .pin-code-inputs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+    .pin-code-inputs input {
+        width: 50px; height: 60px; text-align: center; font-size: 1.5rem;
+        border-radius: 6px; border: 1px solid #ced4da;
+    }
+    .pin-code-inputs input:focus { border-color: #86b7fe; outline: 0; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); }
+    /* Usunięcie strzałek dla pól numerycznych */
+    .pin-code-inputs input::-webkit-outer-spin-button,
+    .pin-code-inputs input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .pin-code-inputs input[type=number] { -moz-appearance: textfield; }
+
+     /* Stopka */
+     .footer-bar { /* Kopiujemy styl stopki */
+        border-top: none; background-color: #0d2d52; color: #ffffff;
+        text-align: center; padding: 15px; width: 100%; margin-top: auto;
+        box-shadow: 0 -3px 6px rgba(0, 0, 0, 0.1);
+    }
+    .footer-bar p { margin: 0; font-size: 13px; }
+    .footer-bar a { color: #aedff7; text-decoration: underline; }
+    .footer-bar a:hover { color: #ffffff; }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-box">
+        <h2>{{ title }}</h2>
+        <p>Na adres <strong>{{ user_email|default:'Twój email' }}</strong> wysłano 4-cyfrowy kod PIN. Wprowadź go poniżej. Kod jest ważny 10 minut.</p>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {# Wyświetlanie błędów formularza (jeśli są) #}
+            {% if form.pin.errors %}
+                <div class="alert alert-danger">
+                    {{ form.pin.errors|first }}
+                </div>
+            {% endif %}
+
+            {# Ukryte pole do zebrania PINu z 4 pól #}
+            <input type="hidden" name="{{ form.pin.name }}" id="id_pin_combined">
+
+            {# Cztery pola input dla PINu #}
+            <div class="pin-code-inputs" id="pin-inputs">
+                <input type="number" class="form-control pin-digit" maxlength="1" autofocus>
+                <input type="number" class="form-control pin-digit" maxlength="1">
+                <input type="number" class="form-control pin-digit" maxlength="1">
+                <input type="number" class="form-control pin-digit" maxlength="1">
+            </div>
+            {# Wyświetlamy tekst pomocniczy z formularza #}
+            {% if form.pin.help_text %}
+            <small class="form-text text-muted d-block mb-3">{{ form.pin.help_text }}</small>
+            {% endif %}
+
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-success btn-lg">Weryfikuj Kod</button>
+            </div>
+        </form>
+
+        <div class="text-center mt-3">
+            <small>Nie otrzymałeś kodu? <a href="{% url 'resend_pin' %}">Wyślij ponownie</a>.</small>
+        </div>
+         <div class="text-center mt-2">
+             <small><a href="{% url 'login' %}" class="text-muted">Anuluj i wróć do wyboru logowania</a></small>
+         </div>
+    </div>
+</div>
+{# Stopka #}
+<div class="footer-bar">
+    <p>
+        Copyright © {% now "Y" %} ... (reszta stopki) ...
+    </p>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{# JavaScript do obsługi 4 pól PIN i auto-przeskoku #}
+<script>
+    const pinInputsContainer = document.getElementById('pin-inputs');
+    const pinDigits = pinInputsContainer.querySelectorAll('.pin-digit');
+    const combinedPinInput = document.getElementById('id_pin_combined');
+
+    pinDigits.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+            // Usuń niecyfrowe znaki i ogranicz do 1 znaku
+            input.value = input.value.replace(/[^0-9]/g, '').slice(0, 1);
+
+            // Zbierz PIN
+            updateCombinedPin();
+
+            // Przejdź do następnego pola, jeśli cyfra została wpisana i nie jest to ostatnie pole
+            if (input.value && index < pinDigits.length - 1) {
+                pinDigits[index + 1].focus();
+            }
+        });
+
+        input.addEventListener('keydown', (e) => {
+            // Przejdź do poprzedniego pola po naciśnięciu Backspace, gdy pole jest puste
+            if (e.key === 'Backspace' && !input.value && index > 0) {
+                pinDigits[index - 1].focus();
+                 updateCombinedPin(); // Zaktualizuj po usunięciu
+            }
+            // Zezwalaj tylko na cyfry i klawisze kontrolne (Backspace, Tab, strzałki)
+            if (!/[0-9]/.test(e.key) && !['Backspace', 'ArrowLeft', 'ArrowRight', 'Tab', 'Delete'].includes(e.key)) {
+                e.preventDefault();
+            }
+             // Aktualizuj po wciśnięciu Backspace/Delete
+             if (['Backspace', 'Delete'].includes(e.key)) {
+                // Opóźnienie, aby wartość zdążyła się zaktualizować
+                 setTimeout(updateCombinedPin, 0);
+             }
+        });
+
+        input.addEventListener('focus', () => {
+            input.select(); // Zaznacz zawartość pola przy focusie
+        });
+    });
+
+    // Funkcja zbierająca cyfry z pól i wpisująca do ukrytego pola
+    function updateCombinedPin() {
+        let combinedValue = '';
+        pinDigits.forEach(digitInput => {
+            combinedValue += digitInput.value;
+        });
+        combinedPinInput.value = combinedValue;
+    }
+
+     // Ustaw fokus na pierwszym polu przy ładowaniu strony
+     if(pinDigits.length > 0) {
+         pinDigits[0].focus();
+     }
+</script>
+{% endblock %}

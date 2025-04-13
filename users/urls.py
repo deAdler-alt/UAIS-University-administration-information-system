@@ -1,33 +1,21 @@
-# users/urls.py
+# users/urls.py (POPRAWIONA WERSJA)
+
 from django.urls import path, reverse_lazy
 from django.contrib.auth import views as auth_views
-from . import views # Importujemy nasze widoki z users/views.py
-
-# Zmień nazwę głównego URL logowania na 'login_choice', bo LOGIN_URL będzie na to wskazywał?
-# Lub pozostaw 'login' dla widoku wyboru. Pozostawmy 'login'.
-# app_name = 'users' # Jeśli używasz przestrzeni nazw dla tej aplikacji
+# Upewnij się, że importujesz wszystkie potrzebne widoki ze swojego pliku views.py
+from . import views
 
 urlpatterns = [
-    # Główny URL logowania - teraz wyświetla stronę wyboru
-    path('login/', views.login_choice_view, name='login'),
+    # Logowanie i 2FA
+    path('login/', views.login_choice_view, name='login'), # Strona wyboru metody logowania
+    path('login/process/', views.process_local_login_view, name='login_process'), # Przetwarzanie loginu lokalnego -> wysyłka PIN
+    path('verify-pin/', views.pin_verification_view, name='pin_verification'), # Strona weryfikacji PIN
+    path('resend-pin/', views.resend_pin_view, name='resend_pin'), # Ścieżka do ponownego wysłania PIN
 
-    # URL, który faktycznie PRZETWARZA formularz logowania lokalnego
-    # Tymczasowo używa LoginView, który przy błędzie ponownie wyświetli stronę wyboru
-    # Zmienimy to później przy implementacji 2FA
-    path('login/process/',
-         auth_views.LoginView.as_view(
-             template_name='users/login_choice.html', # Przy błędzie pokaże znów stronę wyboru z błędami formularza
-             redirect_authenticated_user=True # Jeśli user jest zalogowany, od razu przekieruj (np. do 'home')
-         ),
-         name='login_process'),
+    # Wylogowanie
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'), # Używa LOGOUT_REDIRECT_URL z settings
 
-    # Placeholder dla logowania CAS (na razie nie robi nic lub przekierowuje)
-    # path('login/cas/', lambda request: redirect('home'), name='cas_login_placeholder'), # Można dodać później
-
-    # Wylogowanie - bez zmian (używa formularza POST)
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
-
-    # Ścieżki Resetowania Hasła - bez zmian
+    # Resetowanie Hasła (gdy użytkownik nie jest zalogowany)
     path('password_reset/',
          auth_views.PasswordResetView.as_view(
              template_name='registration/password_reset_form.html',
@@ -52,4 +40,20 @@ urlpatterns = [
              template_name='registration/password_reset_complete.html'
          ),
          name='password_reset_complete'),
+
+    # Zmiana Hasła (gdy użytkownik jest zalogowany)
+    path('password_change/',
+         auth_views.PasswordChangeView.as_view(
+             template_name='registration/password_change_form.html',
+             success_url=reverse_lazy('password_change_done') # Używamy tego URL
+         ),
+         name='password_change'),
+    path('password_change/done/',
+         auth_views.PasswordChangeDoneView.as_view(
+             template_name='registration/password_change_done.html' # Nasz szablon z linkiem/formularzem wylogowania
+         ),
+         name='password_change_done'),
+
+    #  placeholder dla CAS
+path('login/cas/', lambda request: redirect('home'), name='cas_login_placeholder'),
 ]

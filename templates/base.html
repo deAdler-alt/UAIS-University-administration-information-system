@@ -53,6 +53,7 @@
                     <ul class="dropdown-menu" aria-labelledby="mojUaisMenuLink">
                         <li><a class="dropdown-item" href="#">Podgląd roli</a></li>
                         <li><a class="dropdown-item" href="#">Moje dane</a></li>
+                        <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="#">Ustawienia</a></li>
                     </ul>
                 </li>
@@ -152,15 +153,22 @@
 
                 {% endif %} {# Koniec sekcji tylko dla zalogowanych #}
 
-            </ul><ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
+            </ul>
+            
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
                 {% if user.is_authenticated %}
                     <li class="nav-item text-light me-3">
                         Zalogowany użytkownik:
                         <strong>{% if user.first_name and user.last_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.username }}{% endif %}</strong>
                         ({% if user.role %}{{ user.role|upper }}{% else %}BRAK ROLI{% endif %})
                     </li>
+                    {# --- NOWY LINK DO ZMIANY HASŁA --- #}
                     <li class="nav-item">
-                        <span class="text-secondary me-2">|</span>
+                        <a class="nav-link" href="{% url 'password_change' %}">Zmień hasło</a>
+                    </li>
+                    {# --- KONIEC NOWEGO LINKU --- #}
+                    <li class="nav-item">
+                        <span class="text-secondary ms-2 me-2">|</span> {# Dodano ms-2 dla odstępu #}
                         <form class="d-inline" method="post" action="{% url 'logout' %}">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-link nav-link d-inline p-0 m-0 align-baseline">
@@ -173,7 +181,13 @@
                         <a class="nav-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}" href="{% url 'login' %}">Zaloguj się</a>
                     </li>
                 {% endif %}
-            </ul></div></div></nav>
+            </ul>```
+
+        </div>
+    
+    </div>
+
+</nav>
 
 <div class="container content-wrapper">
     {% block content %}
