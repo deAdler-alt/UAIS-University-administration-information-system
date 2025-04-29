@@ -11,7 +11,7 @@ System informatyczny administracji uniwersyteckiej (UAIS) to aplikacja webowa op
 Najpierw sklonuj repozytorium na swój lokalny komputer:
 
 ```bash
-git clone <URL_REPOZYTORIUM>
+git clone https://github.com/deAdler-alt/UAIS-University-administration-information-system.git
 cd UAIS-University-administration-information-system
 ```
 
