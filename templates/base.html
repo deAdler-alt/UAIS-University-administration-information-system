@@ -28,7 +28,17 @@
          .navbar-dark .navbar-nav .dropdown-toggle.disabled::after {
              opacity: 0.5;
          }
-         /* --- KONIEC POPRAWKI CSS --- */
+
+         /* Efekt "glow" dla dostępnych linków w menu przy najechaniu */
+    .navbar-dark .navbar-nav .nav-link:not(.disabled):hover,
+    .navbar-dark .navbar-nav .nav-link:not(.disabled):focus {
+        color: #ffffff; /* Rozjaśnienie tekstu */
+        /* Delikatny biały cień dla efektu "glow" */
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+        /* Można też dodać subtelny box-shadow lub transition */
+        /* background-color: rgba(255, 255, 255, 0.1); */ /* lekkie podświetlenie tła */
+        transition: text-shadow 0.2s ease-in-out, color 0.2s ease-in-out;
+    }
 
     </style>
     {% block extra_head %}{% endblock %}
