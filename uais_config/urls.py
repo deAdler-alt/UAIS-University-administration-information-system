@@ -31,5 +31,4 @@ urlpatterns = [
     path('manage/', include('management.urls', namespace='management')),
     
     # Dodaj przekierowanie dla 127.0.0.1
-    path('', lambda request: HttpResponsePermanentRedirect('/accounts/login') if request.get_host() == '127.0.0.1:8000' else None),
-]
+    path('', lambda request: HttpResponseRedirect('/accounts/login') if request.get_host() == '127.0.0.1:8000' and request.path == '/' else None),]
