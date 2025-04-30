@@ -42,9 +42,15 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 # Application definition
 
 INSTALLED_APPS = [
+    # Nasze aplikacje
     'users.apps.UsersConfig',
     'management.apps.ManagementConfig',
-    #'django_cas_ng',
+    'core.apps.CoreConfig',             # Nowa
+    'phd_process.apps.PhdProcessConfig', # Nowa
+    'documents.apps.DocumentsConfig',   # Nowa
+
+    # Aplikacje Django i ew. 3rd party
+    # 'django_cas_ng', # Nadal zakomentowane
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
