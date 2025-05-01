@@ -1,25 +1,25 @@
-# management/forms.py
+# management/forms.py (POPRAWIONA WERSJA v2)
 from django import forms
-from users.models import User
+from users.models import User # Importujemy NOWY model User
 
-# --- Formularz Tworzenia Użytkownika ---
 class UserCreateForm(forms.ModelForm):
-    # Definicja pól hasła - OK
     password = forms.CharField(label='Hasło', widget=forms.PasswordInput)
     password_confirm = forms.CharField(label='Potwierdź hasło', widget=forms.PasswordInput)
 
     class Meta:
-        model = User # Wskazujemy model
-        fields = ['email', 'username', 'first_name', 'last_name', 'role', 'rada_wydzialu', 'is_active', 'password', 'password_confirm']
+        model = User
+        # Pola z NOWEGO modelu User potrzebne przy tworzeniu (bez imie/nazwisko)
+        # Dodajemy też pole 'osoba' (OneToOne) - na razie jako wybór, potem to ulepszymy
+        fields = ['email', 'aktywny', 'is_staff', 'uprawnienia', 'rd', 'osoba']
         labels = {
-            'is_active': 'Konto aktywne?'
+            'aktywny': 'Konto aktywne?',
+            'is_staff': 'Dostęp do admina Django?'
         }
         help_texts = {
-            'is_active': 'Odznacz, aby dezaktywować konto bez usuwania go.',
-            'username': 'Unikalna nazwa użytkownika (może być wymagana przez system).'
+            'aktywny': 'Odznacz, aby dezaktywować konto bez usuwania go.',
+            'is_staff': 'Zaznacz, aby dać dostęp do standardowego panelu /admin/ Django.'
         }
 
-    # Metoda walidacji haseł - umieszczona Wewnątrz UserCreateForm
     def clean_password_confirm(self):
         password = self.cleaned_data.get("password")
         password_confirm = self.cleaned_data.get("password_confirm")
@@ -27,23 +27,28 @@ class UserCreateForm(forms.ModelForm):
             raise forms.ValidationError("Wprowadzone hasła różnią się.")
         return password_confirm
 
-    # Metoda zapisu z hashowaniem hasła - umieszczona Wewnątrz UserCreateForm
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data["password"]) # Hashowanie
+        # Tutaj brakuje logiki tworzenia/aktualizacji obiektu Osoba
+        # Na razie zapisujemy tylko Usera
         if commit:
             user.save()
         return user
 
-# --- Formularz Edycji Użytkownika ---
 class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['email', 'username', 'first_name', 'last_name', 'role', 'rada_wydzialu', 'is_active']
+        # Pola z NOWEGO modelu User do edycji (bez hasła, bez imie/nazwisko)
+        fields = ['email', 'aktywny', 'is_staff', 'uprawnienia', 'rd', 'osoba']
         labels = {
-            'is_active': 'Konto aktywne?'
+            'aktywny': 'Konto aktywne?',
+            'is_staff': 'Dostęp do admina Django?'
         }
         help_texts = {
-            'is_active': 'Odznacz, aby dezaktywować konto bez usuwania go.',
-            'username': 'Unikalna nazwa użytkownika.'
+            'aktywny': 'Odznacz, aby dezaktywować konto bez usuwania go.',
+            'is_staff': 'Zaznacz, aby dać dostęp do standardowego panelu /admin/ Django.'
         }
+        # widgets = { # Można odkomentować, by zablokować edycję emaila
+        #     'email': forms.EmailInput(attrs={'readonly': 'readonly'}),
+        # }

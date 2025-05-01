@@ -20,6 +20,8 @@ from django.contrib import admin
 from django.urls import path, include # Upewnij się, że include jest zaimportowane
 from users import views as user_views
 from django.http import HttpResponsePermanentRedirect
+from django.conf import settings # Dodaj import
+from django.conf.urls.static import static # Dodaj import
 
 urlpatterns = [
     path('admin/', admin.site.urls), # Standardowy admin Django
@@ -32,3 +34,6 @@ urlpatterns = [
     
     # Dodaj przekierowanie dla 127.0.0.1
     path('', lambda request: HttpResponseRedirect('/accounts/login') if request.get_host() == '127.0.0.1:8000' and request.path == '/' else None),]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
