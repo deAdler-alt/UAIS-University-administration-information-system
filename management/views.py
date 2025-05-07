@@ -5,15 +5,19 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
-from django.http import JsonResponse # Zmieniono HttpResponseRedirect na JsonResponse dla AJAX
-from django.db.models import Q # Do wyszukiwania
+from django.http import JsonResponse
+from django.db.models import Q
 
 # Import modeli
-from users.models import User, LogEntry, RadaDyscypliny # Dodano import LogEntry i RadaDyscypliny
+# Dodano SkladRD, Osoba, Funkcja_czlonka
+from users.models import (
+    User, LogEntry, RadaDyscypliny, SkladRD, Osoba, Funkcja_czlonka, Wydzial # Dodano Wydzial dla kontekstu filtra
+)
 # Import formularzy
-from .forms import UserCreateForm, UserUpdateForm
+# Dodano SkladRDForm
+from .forms import UserCreateForm, UserUpdateForm, SkladRDForm
 
-# --- Widok listy użytkowników ---
+# --- Widoki dla User ---
 class UserListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = User
     template_name = 'management/user_list.html'
@@ -25,21 +29,20 @@ class UserListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
 
     def handle_no_permission(self):
         messages.error(self.request, "Nie masz uprawnień do przeglądania tej sekcji.")
-        return redirect('home') # Usunięto response.status_code = 403, redirect to załatwia
+        return redirect('home')
 
     def get_queryset(self):
-        queryset = User.objects.all().order_by('email')
-        search_query = self.request.GET.get('search_email', None) # Zmieniono parametr na search_email dla jasności
+        queryset = User.objects.all().select_related('wydzial', 'rada_dyscypliny_fk').order_by('email') # Optymalizacja z select_related
+        search_query = self.request.GET.get('search_email', None)
         if search_query:
             queryset = queryset.filter(email__icontains=search_query)
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['current_search'] = self.request.GET.get('search_email', '') # Do wyświetlenia w polu wyszukiwania
+        context['current_search'] = self.request.GET.get('search_email', '')
         return context
 
-# --- Widok tworzenia użytkownika ---
 class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = User
     form_class = UserCreateForm
@@ -54,16 +57,14 @@ class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         return redirect('home')
 
     def form_valid(self, form):
-        messages.success(self.request, f"Użytkownik {form.cleaned_data.get('email')} został pomyślnie utworzony.")
-        # Logowanie zdarzenia
+        email = form.cleaned_data.get('email')
+        messages.success(self.request, f"Użytkownik {email} został pomyślnie utworzony.")
         LogEntry.objects.create(
-            user=self.request.user,
-            action_type='USER_CREATED',
-            details=f"Utworzono nowego użytkownika: {form.cleaned_data.get('email')}.",
+            user=self.request.user, action_type='USER_CREATED',
+            details=f"Utworzono nowego użytkownika: {email}.",
             ip_address=self.request.META.get('REMOTE_ADDR')
         )
         response = super().form_valid(form)
-        # response.status_code = 201 # CreateView domyślnie zwraca 302 po sukcesie, status code nie jest tu potrzebny
         return response
 
     def get_context_data(self, **kwargs):
@@ -71,7 +72,6 @@ class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         context['title'] = 'Dodaj Nowego Użytkownika'
         return context
 
-# --- Widok aktualizacji użytkownika ---
 class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = User
     form_class = UserUpdateForm
@@ -86,31 +86,23 @@ class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return redirect('home')
 
     def form_valid(self, form):
-        # Zbieranie informacji o zmienionych polach dla logu
         changed_fields_list = []
         if form.changed_data:
             for field_name in form.changed_data:
-                # Unikamy logowania hasła
                 if field_name not in ['password', 'password_confirm']:
                     old_value = form.initial.get(field_name, 'N/A')
                     new_value = form.cleaned_data.get(field_name, 'N/A')
-                    # Dla pól ForeignKey, wyświetlajmy czytelne nazwy
                     if hasattr(old_value, '__str__'): old_value = str(old_value)
                     if hasattr(new_value, '__str__'): new_value = str(new_value)
                     changed_fields_list.append(f"Pole '{form.fields[field_name].label or field_name}': '{old_value}' -> '{new_value}'")
-        
         changed_fields_str = "; ".join(changed_fields_list) if changed_fields_list else "Brak wykrytych zmian w danych."
-
         messages.success(self.request, f"Dane użytkownika {form.instance.email} zostały zaktualizowane.")
-        # Logowanie zdarzenia
         LogEntry.objects.create(
-            user=self.request.user,
-            action_type='USER_UPDATED',
+            user=self.request.user, action_type='USER_UPDATED',
             details=f"Zaktualizowano dane użytkownika: {form.instance.email}. Zmiany: {changed_fields_str}",
             ip_address=self.request.META.get('REMOTE_ADDR')
         )
         response = super().form_valid(form)
-        # response.status_code = 200 # UpdateView domyślnie zwraca 302 po sukcesie
         return response
 
     def get_context_data(self, **kwargs):
@@ -118,12 +110,10 @@ class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         context['title'] = f'Edytuj Użytkownika: {self.object.email}'
         return context
 
-# --- Widok usuwania użytkownika ---
-class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, DeleteView):
+class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView): # Usunięto SuccessMessageMixin, bo dodajemy własny message
     model = User
     template_name = 'management/user_confirm_delete.html'
     success_url = reverse_lazy('management:user_list')
-    # success_message = "Użytkownik został pomyślnie usunięty." # Można ustawić, ale log będzie bardziej szczegółowy
 
     def test_func(self):
         return self.request.user.role == User.Role.ADMIN or self.request.user.is_superuser
@@ -132,8 +122,11 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixi
         messages.error(self.request, "Nie masz uprawnień do usuwania użytkowników.")
         return redirect('home')
 
-    def form_valid(self, form): # DeleteView używa form_valid, ale także delete()
-        user_email_to_delete = self.object.email # Pobierz email przed usunięciem obiektu
+    # Modyfikacja metody delete dla lepszej kontroli nad logowaniem i komunikatem
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        success_url = self.get_success_url()
+        user_email_to_delete = self.object.email # Pobierz email przed usunięciem
         LogEntry.objects.create(
             user=self.request.user,
             action_type='USER_DELETED',
@@ -141,24 +134,30 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixi
             ip_address=self.request.META.get('REMOTE_ADDR')
         )
         messages.success(self.request, f"Użytkownik {user_email_to_delete} został pomyślnie usunięty.")
-        return super().form_valid(form)
+        # Używamy self.object.delete() zamiast super().delete() dla jasności
+        self.object.delete()
+        # Zwracamy odpowiedź przekierowującą
+        from django.http import HttpResponseRedirect # Import lokalny
+        return HttpResponseRedirect(success_url)
 
+    # form_valid nie jest potrzebne, jeśli nadpisujemy delete()
+    # def form_valid(self, form): ...
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = f'Potwierdź Usunięcie Użytkownika: {self.object.email}'
         return context
 
-# --- NOWY Widok dla Dziennika Zdarzeń ---
+
+# --- Widok dla Dziennika Zdarzeń ---
 class LogEntryListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = LogEntry
-    template_name = 'management/log_entry_list.html' # Nowy szablon
+    template_name = 'management/log_entry_list.html'
     context_object_name = 'log_entries'
-    paginate_by = 20 # Możesz dostosować
-    ordering = ['-timestamp'] # Najnowsze na górze
+    paginate_by = 20
+    ordering = ['-timestamp']
 
     def test_func(self):
-        # Dostęp dla Admina i Obsługi
         return self.request.user.role in [User.Role.ADMIN, User.Role.OBSLUGA] or self.request.user.is_superuser
 
     def handle_no_permission(self):
@@ -166,39 +165,168 @@ class LogEntryListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         return redirect('home')
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        # Filtrowanie (opcjonalne, można rozbudować)
+        queryset = super().get_queryset().select_related('user')
         user_filter = self.request.GET.get('user_filter', None)
         action_type_filter = self.request.GET.get('action_type_filter', None)
-
         if user_filter:
             queryset = queryset.filter(Q(user__email__icontains=user_filter) | Q(user__first_name__icontains=user_filter) | Q(user__last_name__icontains=user_filter))
         if action_type_filter:
             queryset = queryset.filter(action_type=action_type_filter)
-        
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Dziennik Zdarzeń Systemowych'
-        context['action_types'] = LogEntry.ACTION_TYPES # Do filtrowania w szablonie
+        context['action_types'] = LogEntry.ACTION_TYPES
         context['current_user_filter'] = self.request.GET.get('user_filter', '')
         context['current_action_type_filter'] = self.request.GET.get('action_type_filter', '')
         return context
 
-# --- NOWY Widok dla AJAX do ładowania Rad Dyscypliny ---
+# --- Widok dla AJAX do ładowania Rad Dyscypliny ---
 def load_rady_dyscypliny(request):
     wydzial_id = request.GET.get('wydzial_id')
     try:
-        # Upewniamy się, że wydzial_id jest liczbą całkowitą
         wydzial_id_int = int(wydzial_id)
         rady = RadaDyscypliny.objects.filter(wydzial_id=wydzial_id_int).order_by('nazwa')
-        # Zwracamy listę słowników, każdy słownik ma 'id' i 'nazwa'
         return JsonResponse(list(rady.values('id', 'nazwa')), safe=False)
     except (ValueError, TypeError):
-        # Jeśli wydzial_id nie jest liczbą lub jest None
         return JsonResponse([], safe=False)
     except Exception as e:
-        # Logowanie błędu serwera, jeśli coś innego pójdzie nie tak
-        print(f"Błąd w load_rady_dyscypliny: {e}") # Loguj do konsoli/pliku
+        print(f"Błąd w load_rady_dyscypliny: {e}")
         return JsonResponse({'error': 'Błąd serwera'}, status=500)
+
+
+# --- Widoki CRUD dla SkladRD ---
+
+class SkladRDListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = SkladRD
+    template_name = 'management/skladrd_list.html'
+    context_object_name = 'sklad_list'
+    paginate_by = 25
+
+    def test_func(self):
+        return self.request.user.role in [User.Role.ADMIN, User.Role.OBSLUGA] or self.request.user.is_superuser
+
+    def handle_no_permission(self):
+        messages.error(self.request, "Nie masz uprawnień do zarządzania składami rad.")
+        return redirect('home')
+
+    def get_queryset(self):
+        queryset = SkladRD.objects.select_related(
+            'rd', 'osoba', 'funkcja_czlonka', 'rd__wydzial'
+        ).order_by('rd__wydzial__nazwa', 'rd__nazwa', 'osoba__nazwisko', 'osoba__imie')
+        rada_filter_id = self.request.GET.get('rada_filter', None)
+        if rada_filter_id:
+            try:
+                queryset = queryset.filter(rd_id=int(rada_filter_id))
+            except ValueError:
+                pass # Ignoruj niepoprawny filtr
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Zarządzanie Składami Rad Dyscyplin'
+        context['rady_dyscyplin'] = RadaDyscypliny.objects.select_related('wydzial').order_by('wydzial__nazwa', 'nazwa')
+        context['current_rada_filter'] = self.request.GET.get('rada_filter', '')
+        return context
+
+class SkladRDCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    model = SkladRD
+    form_class = SkladRDForm
+    template_name = 'management/skladrd_form.html'
+    success_url = reverse_lazy('management:skladrd_list')
+
+    def test_func(self):
+        return self.request.user.role in [User.Role.ADMIN, User.Role.OBSLUGA] or self.request.user.is_superuser
+
+    def handle_no_permission(self):
+        messages.error(self.request, "Nie masz uprawnień do dodawania członków do składów rad.")
+        return redirect('management:skladrd_list')
+
+    def form_valid(self, form):
+        # Zapisujemy obiekt przed logowaniem, aby mieć dostęp do jego pól
+        response = super().form_valid(form)
+        # Logowanie zdarzenia
+        LogEntry.objects.create(
+            user=self.request.user,
+            action_type='SKLAD_RD_MEMBER_ADDED', # Warto dodać nowy typ akcji
+            details=f"Dodano członka: {self.object.osoba} (Funkcja: {self.object.funkcja_czlonka}) do składu Rady Dyscypliny: {self.object.rd}.",
+            ip_address=self.request.META.get('REMOTE_ADDR')
+            # Można dodać target_object=self.object, jeśli model LogEntry to obsługuje
+        )
+        messages.success(self.request, f"Dodano {self.object.osoba} do składu {self.object.rd}.")
+        return response
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Dodaj Członka do Składu Rady Dyscypliny'
+        return context
+
+class SkladRDUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = SkladRD
+    form_class = SkladRDForm
+    template_name = 'management/skladrd_form.html'
+    success_url = reverse_lazy('management:skladrd_list')
+
+    def test_func(self):
+        return self.request.user.role in [User.Role.ADMIN, User.Role.OBSLUGA] or self.request.user.is_superuser
+
+    def handle_no_permission(self):
+        messages.error(self.request, "Nie masz uprawnień do edycji członków składów rad.")
+        return redirect('management:skladrd_list')
+
+    def form_valid(self, form):
+        # Logowanie zdarzenia
+        # Można dodać logikę podobną do UserUpdateView, aby logować zmienione pola
+        LogEntry.objects.create(
+            user=self.request.user,
+            action_type='SKLAD_RD_MEMBER_UPDATED', # Warto dodać nowy typ akcji
+            details=f"Zaktualizowano dane członkostwa dla {form.instance.osoba} w Radzie Dyscypliny: {form.instance.rd}.", # Dodaj szczegóły zmian, jeśli chcesz
+            ip_address=self.request.META.get('REMOTE_ADDR')
+            # Można dodać target_object=self.object
+        )
+        messages.success(self.request, f"Zaktualizowano dane członkostwa dla {form.instance.osoba} w {form.instance.rd}.")
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'Edytuj Członkostwo: {self.object.osoba} ({self.object.rd})'
+        return context
+
+class SkladRDDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = SkladRD
+    template_name = 'management/skladrd_confirm_delete.html'
+    success_url = reverse_lazy('management:skladrd_list')
+
+    def test_func(self):
+        return self.request.user.role in [User.Role.ADMIN, User.Role.OBSLUGA] or self.request.user.is_superuser
+
+    def handle_no_permission(self):
+        messages.error(self.request, "Nie masz uprawnień do usuwania członków ze składów rad.")
+        return redirect('management:skladrd_list')
+
+    # Nadpisujemy metodę delete, aby zalogować przed faktycznym usunięciem
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        success_url = self.get_success_url()
+        osoba = self.object.osoba
+        rd = self.object.rd
+        funkcja = self.object.funkcja_czlonka
+        # Logowanie zdarzenia
+        LogEntry.objects.create(
+            user=self.request.user,
+            action_type='SKLAD_RD_MEMBER_DELETED', # Warto dodać nowy typ akcji
+            details=f"Usunięto członka: {osoba} (Funkcja: {funkcja}) ze składu Rady Dyscypliny: {rd}.",
+            ip_address=self.request.META.get('REMOTE_ADDR')
+            # Można dodać target_object=self.object (ale obiekt zaraz zniknie)
+        )
+        messages.success(self.request, f"Usunięto {osoba} ze składu {rd}.")
+        # Używamy self.object.delete() zamiast super().delete()
+        self.object.delete()
+        from django.http import HttpResponseRedirect # Import lokalny
+        return HttpResponseRedirect(success_url)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'Potwierdź Usunięcie Członkostwa: {self.object.osoba} ({self.object.rd})'
+        return context

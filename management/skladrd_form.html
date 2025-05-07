@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title|default:"Formularz Składu Rady" }} - UAIS{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title|default:"Formularz Składu Rady Dyscypliny" }}</h2>
+    <hr>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {# Wyświetlanie błędów niezwiązanych z polami #}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {# Renderowanie pól formularza indywidualnie z użyciem Bootstrap #}
+        {% for field in form %}
+            <div class="mb-3 {% if field.field.widget.input_type == 'checkbox' %}form-check{% endif %}">
+                {% if field.field.widget.input_type == 'checkbox' %}
+                    {{ field.errors }} {# Błędy dla checkboxa #}
+                    {{ field }} {# Renderuje checkbox, np. <input type="checkbox" ...> #}
+                    <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}</label>
+                {% else %}
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field.errors }} {# Błędy dla innych pól #}
+                    {# Dodajemy odpowiednie klasy do widgetu pola #}
+                    {% if field.field.widget.input_type == 'select' %}
+                        {% comment %} Dla pól select używamy form-select {% endcomment %}
+                        {{ field.build_widget|safe }} {# Bezpieczniejszy sposób renderowania widgetu z potencjalnymi atrybutami #}
+                         {% comment %} Alternatywnie, jeśli klasa jest już w SkladRDForm: {{ field }} {% endcomment %}
+                    {% elif field.field.widget.input_type == 'date' %}
+                         {% comment %} Dla pól daty używamy form-control {% endcomment %}
+                         {{ field.build_widget|safe }}
+                         {% comment %} Alternatywnie: {{ field }} {% endcomment %}
+                    {% else %}
+                         {% comment %} Dla innych pól tekstowych itp. używamy form-control {% endcomment %}
+                        <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}"
+                               class="form-control {% if field.errors %}is-invalid{% endif %}"
+                               value="{{ field.value|default:'' }}">
+                    {% endif %}
+                {% endif %}
+                {% if field.help_text %}
+                    <small class="form-text text-muted d-block">{{ field.help_text }}</small>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-lg"></i> Zapisz
+            </button>
+            {# Link powrotny do listy składów #}
+            <a href="{% url 'management:skladrd_list' %}" class="btn btn-secondary">
+                <i class="bi bi-x-lg"></i> Anuluj
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{# Ewentualne skrypty JS, np. dla autocomplete, jeśli zdecydujesz się go użyć #}
+{# {{ form.media }} #}
+{% endblock %}

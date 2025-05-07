@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title|default:"Składy Rad Dyscyplin" }} - UAIS{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>{{ title|default:"Zarządzanie Składami Rad Dyscyplin" }}</h2>
+        {# Link do widoku dodawania nowego członka #}
+        <a href="{% url 'management:skladrd_add' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus-fill"></i> Dodaj Członka do Składu
+        </a>
+    </div>
+
+    {# Komunikaty systemowe #}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {# ----- Formularz Filtrowania ----- #}
+    <form method="get" action="{% url 'management:skladrd_list' %}" class="mb-3 p-3 border rounded bg-light">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label for="id_rada_filter" class="form-label">Filtruj po Radzie Dyscypliny:</label>
+                {# Używamy listy rad przekazanej w kontekście przez widok SkladRDListView #}
+                <select name="rada_filter" id="id_rada_filter" class="form-select form-select-sm">
+                    <option value="">-- Wszystkie Rady --</option>
+                    {% for rada in rady_dyscyplin %}
+                        <option value="{{ rada.pk }}" {% if current_rada_filter == rada.pk|stringformat:"s" %}selected{% endif %}>
+                            {{ rada }} {# Metoda __str__ Rady Dyscypliny powinna zawierać nazwę wydziału #}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-auto">
+                <button class="btn btn-sm btn-primary" type="submit">
+                    <i class="bi bi-filter"></i> Filtruj
+                </button>
+                 {# Link do wyczyszczenia filtrów #}
+                <a href="{% url 'management:skladrd_list' %}" class="btn btn-sm btn-outline-secondary" title="Wyczyść filtry">
+                    <i class="bi bi-x-lg"></i> Wyczyść
+                </a>
+            </div>
+        </div>
+    </form>
+    {# ----- KONIEC Formularza Filtrowania ----- #}
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-sm"> {# table-sm dla mniejszej tabeli #}
+            <thead class="table-light"> {# Jaśniejszy nagłówek #}
+                <tr>
+                    {# Sortowalne nagłówki - opcjonalnie do dodania później #}
+                    <th scope="col">Osoba</th>
+                    <th scope="col">Funkcja</th>
+                    <th scope="col">Rada Dyscypliny</th>
+                    <th scope="col">Wydział</th>
+                    <th scope="col">Data powołania</th>
+                    <th scope="col">Aktywny</th>
+                    <th scope="col">Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                {# Pętla po liście składów przekazanej z widoku #}
+                {% for sklad_entry in sklad_list %}
+                <tr>
+                    <td>{{ sklad_entry.osoba }}</td> {# Zakładamy, że Osoba.__str__ wyświetla wystarczające info #}
+                    <td>{{ sklad_entry.funkcja_czlonka.nazwa|default:"-" }}</td>
+                    <td>{{ sklad_entry.rd.nazwa|default:"-" }}</td>
+                    <td>{{ sklad_entry.rd.wydzial.nazwa|default:"-" }}</td>
+                    <td>{{ sklad_entry.data_powolania|date:"Y-m-d"|default:"-" }}</td>
+                    <td>
+                        {% if sklad_entry.aktywny %}
+                            <i class="bi bi-check-circle-fill text-success" title="Tak"></i>
+                        {% else %}
+                            <i class="bi bi-x-circle-fill text-secondary" title="Nie"></i>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {# Linki do edycji i usunięcia #}
+                        <a href="{% url 'management:skladrd_update' pk=sklad_entry.pk %}" class="btn btn-sm btn-outline-warning me-1 px-2 py-1" title="Edytuj">
+                            <i class="bi bi-pencil-fill"></i>
+                        </a>
+                        <a href="{% url 'management:skladrd_delete' pk=sklad_entry.pk %}" class="btn btn-sm btn-outline-danger px-2 py-1" title="Usuń">
+                            <i class="bi bi-trash-fill"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">Brak wpisów w składach rad{% if current_rada_filter %} pasujących do kryteriów filtrowania{% endif %}.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# Paginacja - wklejona logika z user_list, dostosowana #}
+    {% if is_paginated %}
+        <nav aria-label="Nawigacja stron">
+            <ul class="pagination justify-content-center">
+                 {% with current_params=request.GET.urlencode %}
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_params %}&amp;{{ current_params|safe }}{% endif %}" aria-label="Poprzednia">
+                                &laquo;
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                    {% endif %}
+
+                    {% for page_num in paginator.page_range %}
+                        {% if page_obj.number == page_num %}
+                            <li class="page-item active" aria-current="page"><span class="page-link">{{ page_num }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_num }}{% if current_params %}&amp;{{ current_params|safe }}{% endif %}">{{ page_num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_params %}&amp;{{ current_params|safe }}{% endif %}" aria-label="Następna">
+                                &raquo;
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                    {% endif %}
+                {% endwith %}
+            </ul>
+        </nav>
+    {% endif %}
+
+</div>
+{% endblock %}
