@@ -42,15 +42,9 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 # Application definition
 
 INSTALLED_APPS = [
-    # Nasze aplikacje
-    'core.apps.CoreConfig',          #musi byc przed Users
     'users.apps.UsersConfig',
-    'management.apps.ManagementConfig',       # Nowa
-    'phd_process.apps.PhdProcessConfig', # Nowa
-    'documents.apps.DocumentsConfig',   # Nowa
-
-    # Aplikacje Django i ew. 3rd party
-    # 'django_cas_ng', # Nadal zakomentowane
+    'management.apps.ManagementConfig',
+    #'django_cas_ng',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -158,7 +152,4 @@ AUTH_USER_MODEL = 'users.User'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
