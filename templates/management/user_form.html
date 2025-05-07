@@ -1,5 +1,7 @@
+{#templates/management/user_form.html#}
+
 {% extends 'base.html' %}
-{% load static %}
+{% load static %} {# Zakładam, że static jest potrzebny, jeśli np. chciałbyś dodać osobny plik JS #}
 
 {% block title %}{{ title|default:"Formularz Użytkownika" }} - UAIS{% endblock %}
 
@@ -11,8 +13,23 @@
     <form method="post" novalidate>
         {% csrf_token %}
 
-        {# Proste renderowanie formularza za pomocą .as_p - można później ostylować pole po polu #}
-        {{ form.as_p }}
+        {# Renderowanie pól formularza indywidualnie dla lepszej kontroli #}
+        {% for field in form %}
+            <div class="mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+                {% if field.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in field.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
 
         <div class="mt-4">
             <button type="submit" class="btn btn-success">
@@ -24,4 +41,82 @@
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Upewnij się, że ID pól są zgodne z tym, jak Django je generuje.
+    // Zazwyczaj to "id_nazwa_pola_formularza"
+    const wydzialSelect = document.getElementById('id_wydzial');
+    const radaSelect = document.getElementById('id_rada_dyscypliny_fk'); // _fk dodane dla spójności z nazwą pola w modelu/formularzu
+    const url = "{% url 'management:ajax_load_rady_dyscypliny' %}";
+
+    if (wydzialSelect && radaSelect) {
+        function updateRadaSelectState(wydzialId) {
+            // Zapamiętaj aktualnie wybraną wartość rady, jeśli istnieje (na wypadek re-populacji)
+            const currentRadaValue = radaSelect.value;
+            radaSelect.innerHTML = '<option value="">---------</option>'; // Wyczyść opcje
+
+            if (wydzialId) {
+                fetch(`${url}?wydzial_id=${wydzialId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        let foundSelectedRada = false;
+                        data.forEach(rada => {
+                            const option = document.createElement('option');
+                            option.value = rada.id;
+                            option.textContent = rada.nazwa;
+                            radaSelect.appendChild(option);
+                            // Jeśli edytujemy i rada była wcześniej wybrana LUB jeśli formularz jest
+                            // ponownie ładowany po błędzie walidacji z wybraną radą.
+                            if (rada.id.toString() === currentRadaValue) {
+                                option.selected = true;
+                                foundSelectedRada = true;
+                            }
+                        });
+                        // Jeśli formularz jest edytowany i istnieje instancja z przypisaną radą,
+                        // a nie została ona znaleziona w dynamicznie załadowanych (np. zmiana wydziału),
+                        // spróbuj ją zaznaczyć, jeśli jej ID jest dostępne.
+                        {% if form.instance.pk and form.instance.rada_dyscypliny_fk_id %}
+                        if (!foundSelectedRada && currentRadaValue == "{{ form.instance.rada_dyscypliny_fk_id }}") {
+                           // Jeśli obecna wartość pochodzi z instancji, a nie z poprzedniego wyboru w formularzu,
+                           // i pasuje do rady z nowego wydziału (co by się nie zdarzyło, jeśli wydział się zmienił),
+                           // to ten kod jest bardziej zabezpieczeniem, ale logika zaznaczania jest już wyżej.
+                           // W praktyce, jeśli wydział się zmienia, stara rada nie powinna być zaznaczona.
+                           // Jeśli ładujemy formularz edycji po raz pierwszy, `currentRadaValue` będzie puste
+                           // i dopiero `initial` formularza ustawiłby wartość, co obsłuży poniższy if (wydzialSelect.value)
+                        }
+                        {% endif %}
+                        radaSelect.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Błąd ładowania rad dyscypliny:', error);
+                        radaSelect.disabled = true;
+                    });
+            } else {
+                radaSelect.disabled = true;
+            }
+        }
+
+        wydzialSelect.addEventListener('change', function() {
+            updateRadaSelectState(this.value);
+        });
+
+        // Inicjalizacja przy ładowaniu strony
+        if (wydzialSelect.value) {
+            // Jeśli jest już wybrany wydział (np. przy edycji lub po błędzie walidacji),
+            // wywołaj funkcję, aby załadować i potencjalnie zaznaczyć odpowiednie rady.
+            // Przekazujemy obecną wartość pola rady, aby ją zachować jeśli to możliwe.
+            updateRadaSelectState(wydzialSelect.value);
+        } else {
+            radaSelect.innerHTML = '<option value="">---------</option>';
+            radaSelect.disabled = true;
+        }
+    } else {
+        if (!wydzialSelect) console.error("Nie znaleziono elementu #id_wydzial");
+        if (!radaSelect) console.error("Nie znaleziono elementu #id_rada_dyscypliny_fk");
+    }
+});
+</script>
 {% endblock %}

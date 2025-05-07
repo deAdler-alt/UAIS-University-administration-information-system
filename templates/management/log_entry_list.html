@@ -1,0 +1,120 @@
+{#log_entry_list#}
+
+{% extends 'base.html' %}
+
+{% block title %}{{ title|default:"Dziennik Zdarzeń" }} - UAIS{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>{{ title|default:"Dziennik Zdarzeń Systemowych" }}</h2>
+        {# Tutaj można dodać np. przycisk eksportu, jeśli będzie potrzebny #}
+    </div>
+
+    {# Komunikaty systemowe #}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {# ----- Formularz Filtrowania (Opcjonalny) ----- #}
+    <form method="get" action="{% url 'management:log_entry_list' %}" class="mb-3 p-3 border rounded bg-light">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label for="id_user_filter" class="form-label">Filtruj po użytkowniku (email/imię/nazwisko):</label>
+                <input type="text" name="user_filter" id="id_user_filter" class="form-control form-control-sm" value="{{ current_user_filter|default:'' }}">
+            </div>
+            <div class="col-md-4">
+                <label for="id_action_type_filter" class="form-label">Filtruj po typie akcji:</label>
+                <select name="action_type_filter" id="id_action_type_filter" class="form-select form-select-sm">
+                    <option value="">-- Wszystkie typy --</option>
+                    {% for code, name in action_types %}
+                        <option value="{{ code }}" {% if current_action_type_filter == code %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-auto">
+                <button class="btn btn-sm btn-primary" type="submit">
+                    <i class="bi bi-filter"></i> Filtruj
+                </button>
+                <a href="{% url 'management:log_entry_list' %}" class="btn btn-sm btn-outline-secondary" title="Wyczyść filtry">
+                    <i class="bi bi-x-lg"></i> Wyczyść
+                </a>
+            </div>
+        </div>
+    </form>
+    {# ----- KONIEC Formularza Filtrowania ----- #}
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-sm"> {# Użyto table-sm dla mniejszego rozmiaru #}
+            <thead class="table-light"> {# Jaśniejszy nagłówek dla logów #}
+                <tr>
+                    <th scope="col" style="width: 15%;">Znacznik czasu</th>
+                    <th scope="col" style="width: 15%;">Użytkownik</th>
+                    <th scope="col" style="width: 15%;">Adres IP</th>
+                    <th scope="col" style="width: 15%;">Typ Akcji</th>
+                    <th scope="col">Szczegóły</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in log_entries %} {# Używamy nazwy z context_object_name #}
+                <tr>
+                    <td>{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
+                    <td>{{ log.user.email|default:"System" }}</td> {# Wyświetlamy email użytkownika lub "System" #}
+                    <td>{{ log.ip_address|default:"-" }}</td>
+                    <td>{{ log.get_action_type_display }}</td> {# Wyświetla czytelną nazwę akcji #}
+                    <td style="word-break: break-word;">{{ log.details|default:"" }}</td> {# word-break na wypadek długich szczegółów #}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">Brak wpisów w dzienniku zdarzeń{% if current_user_filter or current_action_type_filter %} pasujących do kryteriów filtrowania{% endif %}.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# Paginacja #}
+    {% if is_paginated %}
+        <nav aria-label="Nawigacja stron">
+            <ul class="pagination justify-content-center">
+                 {# Logika dla zachowania parametrów filtrowania przy paginacji #}
+                {% with current_params=request.GET.urlencode %}
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_params %}&amp;{{ current_params|safe }}{% endif %}" aria-label="Poprzednia">
+                                &laquo;
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                    {% endif %}
+
+                    {% for page_num in paginator.page_range %}
+                        {% if page_obj.number == page_num %}
+                            <li class="page-item active" aria-current="page"><span class="page-link">{{ page_num }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_num }}{% if current_params %}&amp;{{ current_params|safe }}{% endif %}">{{ page_num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_params %}&amp;{{ current_params|safe }}{% endif %}" aria-label="Następna">
+                                &raquo;
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                    {% endif %}
+                {% endwith %}
+            </ul>
+        </nav>
+    {% endif %}
+
+</div>
+{% endblock %}

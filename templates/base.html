@@ -1,3 +1,5 @@
+{#temlates/base.html#}
+
 <!doctype html>
 <html lang="pl">
 <head>
@@ -19,7 +21,7 @@
         .navbar-dark .navbar-nav .nav-link.disabled {
              color: rgba(255, 255, 255, 0.5) !important; /* Jaśniejszy szary na ciemnym tle */
         }
-        /* Przywracamy możliwość klikania dla wyszarzonych linków dropdown w navbarze */
+        /* Przywracamy możliwość klikania dla wyszarzonych linków dropdown w navbarze (jeśli jest potrzebne) */
         .navbar-nav .nav-item .nav-link.dropdown-toggle.disabled {
             pointer-events: auto !important; /* Nadpisuje styl Bootstrapa, przywraca klikalność */
             cursor: pointer; /* Zmiana kursora z 'not-allowed' na standardowy */
@@ -28,17 +30,20 @@
          .navbar-dark .navbar-nav .dropdown-toggle.disabled::after {
              opacity: 0.5;
          }
+        /* Styl dla nieklikalnych elementów dropdown */
+         .dropdown-item.disabled, .dropdown-item:disabled {
+            pointer-events: none; /* Całkowite wyłączenie klikalności */
+            background-color: transparent; /* Usunięcie tła hover */
+            color: #6c757d !important; /* Kolor jak dla text-muted */
+         }
 
          /* Efekt "glow" dla dostępnych linków w menu przy najechaniu */
-    .navbar-dark .navbar-nav .nav-link:not(.disabled):hover,
-    .navbar-dark .navbar-nav .nav-link:not(.disabled):focus {
-        color: #ffffff; /* Rozjaśnienie tekstu */
-        /* Delikatny biały cień dla efektu "glow" */
-        text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
-        /* Można też dodać subtelny box-shadow lub transition */
-        /* background-color: rgba(255, 255, 255, 0.1); */ /* lekkie podświetlenie tła */
-        transition: text-shadow 0.2s ease-in-out, color 0.2s ease-in-out;
-    }
+        .navbar-dark .navbar-nav .nav-link:not(.disabled):hover,
+        .navbar-dark .navbar-nav .nav-link:not(.disabled):focus {
+            color: #ffffff; /* Rozjaśnienie tekstu */
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+            transition: text-shadow 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
 
     </style>
     {% block extra_head %}{% endblock %}
@@ -71,40 +76,60 @@
                 {# Sekcje tylko dla zalogowanych z kontrolą dostępu #}
                 {% if user.is_authenticated %}
 
-                    {% with allowed_roles=user.Role.ADMIN %}
+                    {# --- MENU ZARZĄDZANIE - ZMODYFIKOWANE --- #}
+                    {# Dostęp dla ról ADMIN lub OBSLUGA #}
+                    {% with allowed_management_roles=user.Role.ADMIN|stringformat:"s,"|add:user.Role.OBSLUGA %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if user.role != user.Role.ADMIN and not user.is_superuser %}disabled{% endif %}" {# Dodajemy 'disabled' dla stylu #}
+                        <a class="nav-link dropdown-toggle {% if user.role not in allowed_management_roles and not user.is_superuser %}disabled{% endif %}"
                            href="#"
                            id="managementMenuLink"
                            role="button"
-                           data-bs-toggle="dropdown" {# Zawsze dropdown #}
+                           data-bs-toggle="dropdown"
                            aria-expanded="false"
-                           {% if user.role != user.Role.ADMIN and not user.is_superuser %}
-                           aria-disabled="true" {# Dla semantyki #}
-                           title="Dostęp tylko dla roli Administrator"
+                           {% if user.role not in allowed_management_roles and not user.is_superuser %}
+                           aria-disabled="true"
+                           title="Dostęp tylko dla roli Administrator lub Pomoc administracyjna" {# Zmieniono tytuł #}
                            onclick="showAccessDeniedAlert('ZARZĄDZANIE', '{% if user.role %}{{ user.get_role_display }}{% else %}Brak Roli{% endif %}'); return false;"
                            {% endif %}>
                             ZARZĄDZANIE
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="managementMenuLink">
-                            <li><a class="dropdown-item" href="{% url 'management:user_list' %}">Zarządzaj Użytkownikami</a></li>
-                            <li><a class="dropdown-item" href="#">Zarządzaj Rolami (TODO)</a></li>
+                            {# Dostęp do zarządzania użytkownikami - tylko ADMIN lub superuser #}
+                            <li><a class="dropdown-item {% if user.role != user.Role.ADMIN and not user.is_superuser %}disabled{% endif %}" href="{% url 'management:user_list' %}">
+                                <i class="bi bi-people"></i> Zarządzaj Użytkownikami
+                            </a></li>
+
+                            {# Dziennik zdarzeń - ADMIN, OBSLUGA lub superuser (zgodnie z widokiem) #}
+                            <li><a class="dropdown-item" href="{% url 'management:log_entry_list' %}">
+                                <i class="bi bi-journal-text"></i> Dziennik Zdarzeń
+                            </a></li>
+
+                            {# Zarządzanie rolami - TODO (zapewne tylko ADMIN/superuser) #}
+                            <li><a class="dropdown-item {% if user.role != user.Role.ADMIN and not user.is_superuser %}disabled{% endif %}" href="#">
+                                <i class="bi bi-person-badge"></i> Zarządzaj Rolami (TODO)
+                            </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/admin/">Stary Panel Admina Django</a></li>
+
+                             {# Stary panel admina - tylko dla 'staff' (czyli zazwyczaj ADMIN/superuser) #}
+                            <li><a class="dropdown-item {% if not user.is_staff %}disabled{% endif %}" href="/admin/">
+                                <i class="bi bi-box-arrow-up-right"></i> Stary Panel Admina Django
+                            </a></li>
                         </ul>
                     </li>
                     {% endwith %}
+                    {# --- KONIEC MENU ZARZĄDZANIE --- #}
 
+                    {# Menu KANCELARIA - bez zmian #}
                     {% with allowed_roles=user.Role.PRAWNIK|stringformat:"s,"|add:user.Role.ADMIN %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if user.role not in allowed_roles and not user.is_superuser %}disabled{% endif %}" {# Dodajemy 'disabled' dla stylu #}
+                        <a class="nav-link dropdown-toggle {% if user.role not in allowed_roles and not user.is_superuser %}disabled{% endif %}"
                            href="#"
                            id="kancelariaMenuLink"
                            role="button"
-                           data-bs-toggle="dropdown" {# Zawsze dropdown #}
+                           data-bs-toggle="dropdown"
                            aria-expanded="false"
                            {% if user.role not in allowed_roles and not user.is_superuser %}
-                           aria-disabled="true" {# Dla semantyki #}
+                           aria-disabled="true"
                            title="Dostęp tylko dla roli Radca prawny"
                            onclick="showAccessDeniedAlert('KANCELARIA', '{% if user.role %}{{ user.get_role_display }}{% else %}Brak Roli{% endif %}'); return false;"
                            {% endif %}>
@@ -117,16 +142,17 @@
                     </li>
                     {% endwith %}
 
+                    {# Menu ADMINISTRACJA - bez zmian (poza ewentualną redundancją z ZARZĄDZANIE) #}
                     {% with allowed_roles=user.Role.OBSLUGA|stringformat:"s,"|add:user.Role.ADMIN %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if user.role not in allowed_roles and not user.is_superuser %}disabled{% endif %}" {# Dodajemy 'disabled' dla stylu #}
+                        <a class="nav-link dropdown-toggle {% if user.role not in allowed_roles and not user.is_superuser %}disabled{% endif %}"
                            href="#"
                            id="administracjaMenuLink"
                            role="button"
-                           data-bs-toggle="dropdown" {# Zawsze dropdown #}
+                           data-bs-toggle="dropdown"
                            aria-expanded="false"
                            {% if user.role not in allowed_roles and not user.is_superuser %}
-                           aria-disabled="true" {# Dla semantyki #}
+                           aria-disabled="true"
                            title="Dostęp tylko dla roli Pomoc administracyjna"
                            onclick="showAccessDeniedAlert('ADMINISTRACJA', '{% if user.role %}{{ user.get_role_display }}{% else %}Brak Roli{% endif %}'); return false;"
                            {% endif %}>
@@ -135,20 +161,23 @@
                         <ul class="dropdown-menu" aria-labelledby="administracjaMenuLink">
                             <li><a class="dropdown-item" href="#">Zarządzanie kadrami</a></li>
                             <li><a class="dropdown-item" href="#">Obsługa studentów</a></li>
+                             {# Jeśli Dziennik Zdarzeń ma być też tutaj, odkomentuj poniższą linię #}
+                             {# <li><a class="dropdown-item" href="{% url 'management:log_entry_list' %}"><i class="bi bi-journal-text"></i> Dziennik Zdarzeń</a></li> #}
                         </ul>
                     </li>
                      {% endwith %}
 
+                    {# Menu RADA - bez zmian #}
                     {% with allowed_roles=user.Role.RADA|stringformat:"s,"|add:user.Role.ADMIN %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if user.role not in allowed_roles and not user.is_superuser %}disabled{% endif %}" {# Dodajemy 'disabled' dla stylu #}
+                        <a class="nav-link dropdown-toggle {% if user.role not in allowed_roles and not user.is_superuser %}disabled{% endif %}"
                            href="#"
                            id="radaMenuLink"
                            role="button"
-                           data-bs-toggle="dropdown" {# Zawsze dropdown #}
+                           data-bs-toggle="dropdown"
                            aria-expanded="false"
                            {% if user.role not in allowed_roles and not user.is_superuser %}
-                           aria-disabled="true" {# Dla semantyki #}
+                           aria-disabled="true"
                            title="Dostęp tylko dla roli Zarząd Rady Dyscypliny"
                            onclick="showAccessDeniedAlert('RADA', '{% if user.role %}{{ user.get_role_display }}{% else %}Brak Roli{% endif %}'); return false;"
                            {% endif %}>
@@ -164,21 +193,22 @@
                 {% endif %} {# Koniec sekcji tylko dla zalogowanych #}
 
             </ul>
-            
+
+            {# Sekcja po prawej - informacje o użytkowniku, wylogowanie #}
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
                 {% if user.is_authenticated %}
                     <li class="nav-item text-light me-3">
                         Zalogowany użytkownik:
-                        <strong>{% if user.first_name and user.last_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.username }}{% endif %}</strong>
-                        ({% if user.role %}{{ user.role|upper }}{% else %}BRAK ROLI{% endif %})
+                        {# Zmieniono user.username na email lub imię/nazwisko #}
+                        <strong>{% if user.first_name and user.last_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.email }}{% endif %}</strong>
+                        {# Zmieniono na get_role_display dla czytelności #}
+                        ({% if user.role %}{{ user.get_role_display }}{% else %}BRAK ROLI{% endif %})
                     </li>
-                    {# --- NOWY LINK DO ZMIANY HASŁA --- #}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'password_change' %}">Zmień hasło</a>
                     </li>
-                    {# --- KONIEC NOWEGO LINKU --- #}
                     <li class="nav-item">
-                        <span class="text-secondary ms-2 me-2">|</span> {# Dodano ms-2 dla odstępu #}
+                        <span class="text-secondary ms-2 me-2">|</span>
                         <form class="d-inline" method="post" action="{% url 'logout' %}">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-link nav-link d-inline p-0 m-0 align-baseline">
@@ -191,12 +221,10 @@
                         <a class="nav-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}" href="{% url 'login' %}">Zaloguj się</a>
                     </li>
                 {% endif %}
-            </ul>```
+            </ul>
 
-        </div>
-    
-    </div>
-
+        </div> {# Koniec .collapse #}
+    </div> {# Koniec .container-fluid #}
 </nav>
 
 <div class="container content-wrapper">
@@ -213,12 +241,15 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 
 {% block extra_scripts %}
+{# Dodano sprawdzenie, czy użytkownik jest zalogowany, przed zdefiniowaniem funkcji, #}
+{# chociaż sama funkcja może być bezpiecznie zdefiniowana zawsze. #}
+{% if user.is_authenticated %}
 <script>
     function showAccessDeniedAlert(sectionName, userRole) {
-        // Używamy poprawionej treści alertu
-        alert(`Ten kontent ('${sectionName}') jest niedostepny dla Twojej roli ('${userRole}').\nSkontaktuj się z administratorem serwisu, jeśli uważasz, że to błąd.`);
+        alert(`Dostęp do sekcji '${sectionName}' jest ograniczony.\nTwoja rola ('${userRole}') nie posiada wystarczających uprawnień.\nSkontaktuj się z administratorem, jeśli uważasz, że to błąd.`);
     }
 </script>
+{% endif %}
 {% endblock %}
 
 </body>
