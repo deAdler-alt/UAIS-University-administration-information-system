@@ -1,29 +1,32 @@
-{#templates/management/user_confirm_delete.html#}
-
 {% extends 'base.html' %}
 
-{% block title %}{{ title|default:"Potwierdź Usunięcie" }} - UAIS{% endblock %}
+{% block title %}{{ title|default:"Potwierdź Usunięcie Osoby" }} - UAIS{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h2>{{ title|default:"Potwierdź Usunięcie" }}</h2>
+    <h2>{{ title|default:"Potwierdź Usunięcie Osoby" }}</h2>
     <hr>
 
-    <p class="lead">Czy na pewno chcesz usunąć użytkownika:</p>
-    <ul>
-        <li><strong>Email:</strong> {{ object.email }}</li>
-        <li><strong>Imię:</strong> {{ object.first_name|default:"-" }}</li>
-        <li><strong>Nazwisko:</strong> {{ object.last_name|default:"-" }}</li>
-        <li><strong>Rola:</strong> {{ object.get_role_display|default:"Brak" }}</li>
-    </ul>
-    <p class="text-danger fw-bold">UWAGA: Tej operacji nie można cofnąć!</p>
+    <p class="lead">Czy na pewno chcesz usunąć następującą osobę?</p>
+
+    {# Wyświetlamy szczegóły obiektu Osoba #}
+    <div class="alert alert-warning">
+        <p><strong>{{ object }}</strong></p> {# Używa __str__ z modelu Osoba #}
+        <ul>
+            <li><strong>Email:</strong> {{ object.email }}</li>
+            {% if object.stanowisko %}<li><strong>Stanowisko:</strong> {{ object.stanowisko }}</li>{% endif %}
+            {# Można dodać więcej pól dla pewności #}
+        </ul>
+    </div>
+
+    <p class="text-danger fw-bold">UWAGA: Usunięcie osoby może wpłynąć na powiązane rekordy (np. składy rad, przewody doktorskie). Tej operacji nie można cofnąć!</p>
 
     <form method="post">
         {% csrf_token %}
         <button type="submit" class="btn btn-danger">
-            <i class="bi bi-trash-fill"></i> Tak, usuń użytkownika
+            <i class="bi bi-trash-fill"></i> Tak, usuń osobę
         </button>
-        <a href="{% url 'management:user_list' %}" class="btn btn-secondary">
+        <a href="{% url 'management:osoba_list' %}" class="btn btn-secondary">
             <i class="bi bi-x-lg"></i> Anuluj
         </a>
     </form>

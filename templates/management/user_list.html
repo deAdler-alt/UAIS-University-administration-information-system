@@ -1,15 +1,13 @@
-{#templates/management/user_list.html#}
-
 {% extends 'base.html' %}
 
-{% block title %}Zarządzanie Użytkownikami - UAIS{% endblock %}
+{% block title %}{{ title|default:"Osoby" }} - UAIS{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Zarządzanie Użytkownikami</h2>
-        <a href="{% url 'management:user_add' %}" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Dodaj Nowego Użytkownika
+        <h2>{{ title|default:"Zarządzanie Osobami" }}</h2>
+        <a href="{% url 'management:osoba_add' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus-fill"></i> Dodaj Nową Osobę
         </a>
     </div>
 
@@ -23,15 +21,15 @@
         {% endfor %}
     {% endif %}
 
-    {# ----- NOWY Formularz Wyszukiwania ----- #}
-    <form method="get" action="{% url 'management:user_list' %}" class="mb-3">
+    {# ----- Formularz Wyszukiwania ----- #}
+    <form method="get" action="{% url 'management:osoba_list' %}" class="mb-3">
         <div class="input-group">
-            <input type="text" name="search_email" class="form-control" placeholder="Szukaj po adresie email..." value="{{ current_search|default:'' }}">
+            <input type="text" name="search_person" class="form-control" placeholder="Szukaj po imieniu, nazwisku lub emailu..." value="{{ current_search|default:'' }}">
             <button class="btn btn-outline-secondary" type="submit">
                 <i class="bi bi-search"></i> Szukaj
             </button>
             {% if current_search %}
-            <a href="{% url 'management:user_list' %}" class="btn btn-outline-danger" title="Wyczyść wyszukiwanie">
+            <a href="{% url 'management:osoba_list' %}" class="btn btn-outline-danger" title="Wyczyść wyszukiwanie">
                 <i class="bi bi-x-lg"></i>
             </a>
             {% endif %}
@@ -40,48 +38,36 @@
     {# ----- KONIEC Formularza Wyszukiwania ----- #}
 
     <div class="table-responsive">
-        <table class="table table-striped table-hover table-bordered">
-            <thead class="table-dark">
+        <table class="table table-striped table-hover table-sm">
+            <thead class="table-light">
                 <tr>
-                    <th scope="col">Email (Login)</th>
-                    <th scope="col">Imię</th>
-                    <th scope="col">Nazwisko</th>
-                    <th scope="col">Rola</th>
-                    <th scope="col">Wydział</th>          {# ZMIANA NAGŁÓWKA #}
-                    <th scope="col">Rada Dyscypliny</th> {# NOWY NAGŁÓWEK #}
-                    <th scope="col">Aktywny</th>
+                    <th scope="col">Nazwisko i Imię</th>
+                    <th scope="col">Tytuł/Stopień</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Stanowisko</th>
                     <th scope="col">Akcje</th>
                 </tr>
             </thead>
             <tbody>
-                {% for user_obj in users_list %}
+                {% for osoba in osoby_list %} {# Używamy nazwy z context_object_name #}
                 <tr>
-                    <td>{{ user_obj.email }}</td>
-                    <td>{{ user_obj.first_name|default:"-" }}</td>
-                    <td>{{ user_obj.last_name|default:"-" }}</td>
-                    <td>{{ user_obj.get_role_display|default:"Brak" }}</td>
-                    <td>{{ user_obj.wydzial.nazwa|default:"-" }}</td>          {# ZMIANA POLA #}
-                    <td>{{ user_obj.rada_dyscypliny_fk.nazwa|default:"-" }}</td> {# NOWE POLE #}
+                    <td>{{ osoba.nazwisko }}, {{ osoba.imie }}</td>
+                    <td>{{ osoba.tytul_stopien|default:"-" }} {{ osoba.tytul_po|default:"" }}</td>
+                    <td>{{ osoba.email }}</td>
+                    <td>{{ osoba.stanowisko|default:"-" }}</td>
                     <td>
-                        {% if user_obj.is_active %}
-                            <i class="bi bi-check-circle-fill text-success"></i> Tak
-                        {% else %}
-                            <i class="bi bi-x-circle-fill text-danger"></i> Nie
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{% url 'management:user_update' pk=user_obj.pk %}" class="btn btn-sm btn-warning me-1" title="Edytuj">
+                        <a href="{% url 'management:osoba_update' pk=osoba.pk %}" class="btn btn-sm btn-outline-warning me-1 px-2 py-1" title="Edytuj">
                             <i class="bi bi-pencil-fill"></i>
                         </a>
-                        <a href="{% url 'management:user_delete' pk=user_obj.pk %}" class="btn btn-sm btn-danger" title="Usuń">
+                        <a href="{% url 'management:osoba_delete' pk=osoba.pk %}" class="btn btn-sm btn-outline-danger px-2 py-1" title="Usuń">
                             <i class="bi bi-trash-fill"></i>
                         </a>
+                        {# Można tu dodać link do widoku szczegółów osoby, jeśli będzie potrzebny #}
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    {# Zaktualizowano colspan z 7 na 8 ze względu na nową kolumnę Rada Dyscypliny #}
-                    <td colspan="8" class="text-center">Nie znaleziono użytkowników{% if current_search %} pasujących do kryteriów wyszukiwania{% endif %}.</td>
+                    <td colspan="5" class="text-center">Nie znaleziono osób{% if current_search %} pasujących do kryteriów wyszukiwania{% endif %}.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -92,38 +78,33 @@
     {% if is_paginated %}
         <nav aria-label="Nawigacja stron">
             <ul class="pagination justify-content-center">
-                {# Logika dla zachowania parametrów wyszukiwania przy paginacji #}
-                {% with Rrequest_GET=request.GET.urlencode %}
+                 {% with current_params=request.GET.urlencode %}
                     {% if page_obj.has_previous %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if Rrequest_GET %}&amp;{{ Rrequest_GET|safe }}{% endif %}" aria-label="Poprzednia">
-                                <span aria-hidden="true">&laquo;</span>
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_params %}&amp;{{ current_params|safe }}{% endif %}" aria-label="Poprzednia">
+                                &laquo;
                             </a>
                         </li>
                     {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link">&laquo;</span>
-                        </li>
+                        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
                     {% endif %}
 
                     {% for page_num in paginator.page_range %}
                         {% if page_obj.number == page_num %}
                             <li class="page-item active" aria-current="page"><span class="page-link">{{ page_num }}</span></li>
                         {% else %}
-                            <li class="page-item"><a class="page-link" href="?page={{ page_num }}{% if Rrequest_GET %}&amp;{{ Rrequest_GET|safe }}{% endif %}">{{ page_num }}</a></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ page_num }}{% if current_params %}&amp;{{ current_params|safe }}{% endif %}">{{ page_num }}</a></li>
                         {% endif %}
                     {% endfor %}
 
                     {% if page_obj.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if Rrequest_GET %}&amp;{{ Rrequest_GET|safe }}{% endif %}" aria-label="Następna">
-                                <span aria-hidden="true">&raquo;</span>
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_params %}&amp;{{ current_params|safe }}{% endif %}" aria-label="Następna">
+                                &raquo;
                             </a>
                         </li>
                     {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link">&raquo;</span>
-                        </li>
+                        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
                     {% endif %}
                 {% endwith %}
             </ul>
