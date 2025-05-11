@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% comment %} templates/management/doktorant_form.html {% endcomment %}
+{% load static %}
+
+{% block title %}{{ title|default:"Formularz Doktoranta" }} - UAIS{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title|default:"Formularz Doktoranta" }}</h2>
+    <hr>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {# Renderowanie pól formularza DoktorantForm. #}
+        {# Upewnij się, że pole 'wydzial' jest renderowane PRZED 'rada_dyscypliny'. #}
+        {# W forms.py pole 'wydzial' zostało dodane do Meta.fields przed 'rada_dyscypliny' #}
+        {% for field in form %}
+            <div class="mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {% if field.errors %}
+                    <div class="alert alert-danger p-1 small">
+                        {{ field.errors|join:", " }}
+                    </div>
+                {% endif %}
+                {{ field }} {# Django doda odpowiednie klasy dzięki definicji widgetów w DoktorantForm #}
+                {% if field.help_text %}
+                    <small class="form-text text-muted d-block">{{ field.help_text }}</small>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-lg"></i> Zapisz Doktoranta
+            </button>
+            <a href="{% url 'management:doktorant_list' %}" class="btn btn-secondary">
+                <i class="bi bi-x-lg"></i> Anuluj
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock content %}
+
+{% block extra_scripts %}
+{{ block.super }} {# Jeśli base.html ma jakieś skrypty w tym bloku, które chcesz zachować #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function setupCascadingDropdown(wydzialSelectId, radaSelectId, ajaxUrl) {
+        const wydzialSelect = document.getElementById(wydzialSelectId);
+        const radaDyscyplinySelect = document.getElementById(radaSelectId);
+
+        if (!wydzialSelect || !radaDyscyplinySelect) {
+            // console.warn('Nie znaleziono pól select dla:', wydzialSelectId, radaSelectId);
+            return;
+        }
+
+        function loadRady(wydzialId) {
+            if (!wydzialId) {
+                radaDyscyplinySelect.innerHTML = '<option value="">---------</option>';
+                radaDyscyplinySelect.disabled = true;
+                return;
+            }
+
+            fetch(`${ajaxUrl}?wydzial_id=${wydzialId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const currentlySelectedRada = radaDyscyplinySelect.value;
+                    radaDyscyplinySelect.innerHTML = ''; 
+                    
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = '---------';
+                    radaDyscyplinySelect.appendChild(defaultOption);
+
+                    data.forEach(rada => {
+                        const option = document.createElement('option');
+                        option.value = rada.id;
+                        option.textContent = rada.nazwa;
+                        radaDyscyplinySelect.appendChild(option);
+                    });
+                    
+                    if (currentlySelectedRada) {
+                        let found = false;
+                        for (let i = 0; i < radaDyscyplinySelect.options.length; i++) {
+                            if (radaDyscyplinySelect.options[i].value === currentlySelectedRada) {
+                                radaDyscyplinySelect.value = currentlySelectedRada;
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                    radaDyscyplinySelect.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Błąd podczas ładowania rad dyscypliny:', error);
+                    radaDyscyplinySelect.innerHTML = '<option value="">Błąd ładowania</option>';
+                    radaDyscyplinySelect.disabled = true;
+                });
+        }
+
+        wydzialSelect.addEventListener('change', function() {
+            const selectedWydzialId = this.value;
+            radaDyscyplinySelect.value = ''; 
+            loadRady(selectedWydzialId);
+        });
+
+        const initialWydzialId = wydzialSelect.value;
+        if (initialWydzialId) {
+            loadRady(initialWydzialId);
+        } else {
+            radaDyscyplinySelect.innerHTML = '<option value="">---------</option>';
+            radaDyscyplinySelect.disabled = true;
+        }
+    }
+
+    const ajaxUrlRady = "{% url 'management:ajax_load_rady_dyscypliny' %}";
+    
+    // Inicjalizacja tylko dla formularza doktoranta na tej stronie
+    if (document.getElementById('id_wydzial_doktorant')) {
+        setupCascadingDropdown('id_wydzial_doktorant', 'id_rada_dyscypliny_doktorant', ajaxUrlRady);
+    }
+});
+</script>
+{% endblock extra_scripts %}

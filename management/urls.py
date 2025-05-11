@@ -1,11 +1,13 @@
 # management/urls.py
 from django.urls import path
-# Zaimportuj wszystkie potrzebne widoki, w tym nowe dla Osoba
+# Zaimportuj wszystkie potrzebne widoki
 from .views import (
     UserListView, UserCreateView, UserUpdateView, UserDeleteView,
     LogEntryListView, load_rady_dyscypliny,
     SkladRDListView, SkladRDCreateView, SkladRDUpdateView, SkladRDDeleteView,
-    OsobaListView, OsobaCreateView, OsobaUpdateView, OsobaDeleteView # NOWE WIDOKI dla Osoba
+    OsobaListView, OsobaCreateView, OsobaUpdateView, OsobaDeleteView,
+    # UWAGA: Dodajemy importy dla widoków Doktorant (które zaraz stworzymy)
+    DoktorantListView, DoktorantCreateView, DoktorantUpdateView, DoktorantDeleteView
 )
 
 app_name = 'management'
@@ -29,13 +31,16 @@ urlpatterns = [
     path('council-members/<int:pk>/edit/', SkladRDUpdateView.as_view(), name='skladrd_update'),
     path('council-members/<int:pk>/delete/', SkladRDDeleteView.as_view(), name='skladrd_delete'),
 
-    # --- Zarządzanie Osobami (NOWE) ---
-    # Lista osób (z wyszukiwaniem)
+    # --- Zarządzanie Osobami ---
     path('persons/', OsobaListView.as_view(), name='osoba_list'),
-    # Dodawanie nowej osoby
     path('persons/add/', OsobaCreateView.as_view(), name='osoba_add'),
-    # Edycja konkretnej osoby (identyfikowanej przez PK)
     path('persons/<int:pk>/edit/', OsobaUpdateView.as_view(), name='osoba_update'),
-    # Usuwanie konkretnej osoby
     path('persons/<int:pk>/delete/', OsobaDeleteView.as_view(), name='osoba_delete'),
+
+    # --- Zarządzanie Doktorantami (NOWE) ---
+    # UWAGA: Dodano nowe ścieżki URL dla modelu Doktorant
+    path('doktoranci/', DoktorantListView.as_view(), name='doktorant_list'),
+    path('doktoranci/add/', DoktorantCreateView.as_view(), name='doktorant_add'),
+    path('doktoranci/<int:pk>/edit/', DoktorantUpdateView.as_view(), name='doktorant_update'),
+    path('doktoranci/<int:pk>/delete/', DoktorantDeleteView.as_view(), name='doktorant_delete'),
 ]

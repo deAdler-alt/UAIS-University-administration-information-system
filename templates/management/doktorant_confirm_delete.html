@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{# === ZMIANA: Tytuł === #}
+{% block title %}{{ title|default:"Potwierdź Usunięcie Doktoranta" }} - UAIS{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {# === ZMIANA: Tytuł === #}
+    <h2>{{ title|default:"Potwierdź Usunięcie Doktoranta" }}</h2>
+    <hr>
+
+    {# === ZMIANA: Tekst === #}
+    <p class="lead">Czy na pewno chcesz usunąć następującego doktoranta?</p>
+
+    {# === ZMIANA: Wyświetlane szczegóły obiektu === #}
+    <div class="alert alert-warning">
+        <p><strong>{{ object }}</strong></p> {# Używa __str__ z modelu Doktorant #}
+        <ul>
+            <li><strong>Email:</strong> {{ object.email }}</li>
+            {% if object.rada_dyscypliny %}<li><strong>Rada Dyscypliny:</strong> {{ object.rada_dyscypliny }}</li>{% endif %}
+            {% if object.telefon %}<li><strong>Telefon:</strong> {{ object.telefon }}</li>{% endif %}
+        </ul>
+    </div>
+
+    {# === ZMIANA: Tekst ostrzeżenia (jeśli konieczne) === #}
+    <p class="text-danger fw-bold">UWAGA: Usunięcie doktoranta może wpłynąć na powiązane przewody doktorskie. Tej operacji nie można cofnąć!</p>
+
+    <form method="post">
+        {% csrf_token %}
+        {# === ZMIANA: Tekst przycisku === #}
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash-fill"></i> Tak, usuń doktoranta
+        </button>
+        {# === ZMIANA: Link anulowania === #}
+        <a href="{% url 'management:doktorant_list' %}" class="btn btn-secondary">
+            <i class="bi bi-x-lg"></i> Anuluj
+        </a>
+    </form>
+</div>
+{% endblock %}

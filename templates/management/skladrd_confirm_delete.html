@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% comment %} templates/management/skladrd_confirm_delete.html {% endcomment %}
+
+
+{% block title %}{{ title|default:"Potwierdź Usunięcie ze Składu" }} - UAIS{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title|default:"Potwierdź Usunięcie Członkostwa w Radzie" }}</h2>
+    <hr>
+
+    <p class="lead">Czy na pewno chcesz usunąć następujący wpis ze składu Rady Dyscypliny?</p>
+
+    <div class="alert alert-warning">
+        <ul>
+            <li><strong>Osoba:</strong> {{ object.osoba }}</li>
+            <li><strong>Funkcja:</strong> {{ object.funkcja_czlonka.nazwa|default:"Brak" }}</li>
+            <li><strong>Rada Dyscypliny:</strong> {{ object.rd.nazwa|default:"Brak" }}</li>
+            <li><strong>Wydział:</strong> {{ object.rd.wydzial.nazwa|default:"Brak" }}</li>
+            <li><strong>Data powołania:</strong> {{ object.data_powolania|date:"Y-m-d"|default:"Brak" }}</li>
+            <li><strong>Status aktywności:</strong> {% if object.aktywny %}Aktywny{% else %}Nieaktywny{% endif %}</li>
+        </ul>
+    </div>
+
+    <p class="text-danger fw-bold">UWAGA: Tej operacji nie można cofnąć!</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash-fill"></i> Tak, usuń wpis
+        </button>
+        <a href="{% url 'management:skladrd_list' %}" class="btn btn-secondary">
+            <i class="bi bi-x-lg"></i> Anuluj
+        </a>
+    </form>
+</div>
+{% endblock %}

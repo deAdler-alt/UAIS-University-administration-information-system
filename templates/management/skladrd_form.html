@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% comment %} templates/management/skladrd_form.html {% endcomment %}
+
+
+{% block title %}{{ title|default:"Formularz Składu Rady" }} - UAIS{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title|default:"Formularz Składu Rady Dyscypliny" }}</h2>
+    <hr>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% for field in form %}
+            <div class="mb-3 {% if field.field.widget.input_type == 'checkbox' %}form-check{% else %}row{% endif %}">
+                {% if field.field.widget.input_type == 'checkbox' %}
+                    {% if field.errors %}<div class="alert alert-danger p-1 small">{{ field.errors|join:", " }}</div>{% endif %}
+                    {{ field }} {# Renderuje checkbox, np. <input type="checkbox" ...> #}
+                    <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}</label>
+                {% else %}
+                    <label for="{{ field.id_for_label }}" class="col-sm-3 col-form-label text-sm-end">{{ field.label }}:</label>
+                    <div class="col-sm-9">
+                        {% if field.errors %}<div class="alert alert-danger p-1 small">{{ field.errors|join:", " }}</div>{% endif %}
+                        {{ field }} {# Zakładamy, że widgety w SkladRDForm mają klasy Bootstrap #}
+                    </div>
+                {% endif %}
+                {% if field.help_text %}
+                    <div class="{% if field.field.widget.input_type != 'checkbox' %}offset-sm-3 col-sm-9{% endif %}">
+                        <small class="form-text text-muted d-block">{{ field.help_text }}</small>
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-lg"></i> Zapisz
+            </button>
+            <a href="{% url 'management:skladrd_list' %}" class="btn btn-secondary">
+                <i class="bi bi-x-lg"></i> Anuluj
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

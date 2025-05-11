@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% comment %} templates/management/osoba_confirm_delete.html {% endcomment %}
+
+{% block title %}{{ title|default:"Potwierdź Usunięcie Osoby" }} - UAIS{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title|default:"Potwierdź Usunięcie Osoby" }}</h2>
+    <hr>
+
+    <p class="lead">Czy na pewno chcesz usunąć następującą osobę?</p>
+
+    <div class="alert alert-warning">
+        <p><strong>{{ object }}</strong></p> {# Używa __str__ z modelu Osoba #}
+        <ul>
+            <li><strong>Email:</strong> {{ object.email }}</li>
+            {% if object.stanowisko %}<li><strong>Stanowisko:</strong> {{ object.stanowisko }}</li>{% endif %}
+            {# Możesz dodać więcej pól dla pewności, np. tytuł #}
+            {% if object.tytul_stopien or object.tytul_po %}
+            <li><strong>Tytuł/Stopień:</strong> 
+                {% if object.tytul_stopien %}{{ object.tytul_stopien }} {% endif %}
+                {% if object.tytul_po %}{{ object.tytul_po }}{% endif %}
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+
+    <p class="text-danger fw-bold">UWAGA: Usunięcie osoby może wpłynąć na powiązane rekordy (np. składy rad, przewody doktorskie). Tej operacji nie można cofnąć!</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash-fill"></i> Tak, usuń osobę
+        </button>
+        <a href="{% url 'management:osoba_list' %}" class="btn btn-secondary">
+            <i class="bi bi-x-lg"></i> Anuluj
+        </a>
+    </form>
+</div>
+{% endblock %}

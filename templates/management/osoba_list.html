@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% comment %} templates/management/osoba_list.html {% endcomment %}
+
+{% block title %}{{ title|default:"Osoby" }} - UAIS{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>{{ title|default:"Zarządzanie Osobami" }}</h2>
+        <a href="{% url 'management:osoba_add' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus-fill"></i> Dodaj Nową Osobę
+        </a>
+    </div>
+
+    {# Komunikaty systemowe #}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {# ----- Formularz Wyszukiwania ----- #}
+    <form method="get" action="{% url 'management:osoba_list' %}" class="mb-3">
+        <div class="input-group">
+            <input type="text" name="search_person" class="form-control" placeholder="Szukaj po imieniu, nazwisku lub emailu..." value="{{ current_search|default:'' }}">
+            <button class="btn btn-outline-secondary" type="submit">
+                <i class="bi bi-search"></i> Szukaj
+            </button>
+            {% if current_search %}
+            <a href="{% url 'management:osoba_list' %}" class="btn btn-outline-danger" title="Wyczyść wyszukiwanie">
+                <i class="bi bi-x-lg"></i>
+            </a>
+            {% endif %}
+        </div>
+    </form>
+    {# ----- KONIEC Formularza Wyszukiwania ----- #}
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">Nazwisko i Imię</th>
+                    <th scope="col">Tytuł/Stopień</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Stanowisko</th>
+                    <th scope="col">Płeć</th>
+                    <th scope="col">Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                {# Używamy context_object_name zdefiniowanego w OsobaListView #}
+                {% for osoba in osoby_list %} 
+                <tr>
+                    <td>{{ osoba.nazwisko }}, {{ osoba.imie }}</td>
+                    <td>
+                        {% if osoba.tytul_stopien %}{{ osoba.tytul_stopien }} {% endif %}
+                        {% if osoba.tytul_po %}{{ osoba.tytul_po }}{% endif %}
+                        {% if not osoba.tytul_stopien and not osoba.tytul_po %}-{% endif %}
+                    </td>
+                    <td>{{ osoba.email }}</td>
+                    <td>{{ osoba.stanowisko|default:"-" }}</td>
+                    <td>{{ osoba.get_plec_display|default:"-" }}</td> {# Używamy get_plec_display dla czytelnej formy #}
+                    <td>
+                        <a href="{% url 'management:osoba_update' pk=osoba.pk %}" class="btn btn-sm btn-outline-warning me-1 px-2 py-1" title="Edytuj">
+                            <i class="bi bi-pencil-fill"></i>
+                        </a>
+                        <a href="{% url 'management:osoba_delete' pk=osoba.pk %}" class="btn btn-sm btn-outline-danger px-2 py-1" title="Usuń">
+                            <i class="bi bi-trash-fill"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">Nie znaleziono osób{% if current_search %} pasujących do kryteriów wyszukiwania{% endif %}.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# Paginacja #}
+    {% if is_paginated %}
+        <nav aria-label="Nawigacja stron">
+            <ul class="pagination justify-content-center">
+                 {% with current_params=request.GET.urlencode %}
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_params %}&amp;{{ current_params|safe }}{% endif %}" aria-label="Poprzednia">
+                                &laquo;
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                    {% endif %}
+
+                    {% for page_num in paginator.page_range %}
+                        {% if page_obj.number == page_num %}
+                            <li class="page-item active" aria-current="page"><span class="page-link">{{ page_num }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_num }}{% if current_params %}&amp;{{ current_params|safe }}{% endif %}">{{ page_num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_params %}&amp;{{ current_params|safe }}{% endif %}" aria-label="Następna">
+                                &raquo;
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                    {% endif %}
+                {% endwith %}
+            </ul>
+        </nav>
+    {% endif %}
+
+</div>
+{% endblock %}

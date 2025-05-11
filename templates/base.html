@@ -98,7 +98,10 @@
                             <li><a class="dropdown-item {% if user.role != user.Role.ADMIN and not user.is_superuser %}disabled{% endif %}" href="{% url 'management:user_list' %}">
                                 <i class="bi bi-people"></i> Zarządzaj Użytkownikami
                             </a></li>
-
+                                    {# === NOWY LINK DLA DOKTORANTÓW === #}
+                            <li><a class="dropdown-item {% if user.role not in allowed_management_roles and not user.is_superuser %}disabled{% endif %}" href="{% url 'management:doktorant_list' %}">
+                                <i class="bi bi-mortarboard-fill"></i> Zarządzaj Doktorantami {# Ikona jest przykładowa #}
+                            </a></li>   
                             {# Dziennik zdarzeń - ADMIN, OBSLUGA lub superuser (zgodnie z widokiem) #}
                             <li><a class="dropdown-item" href="{% url 'management:log_entry_list' %}">
                                 <i class="bi bi-journal-text"></i> Dziennik Zdarzeń
