@@ -11,8 +11,8 @@ System informatyczny administracji uniwersyteckiej (UAIS) to aplikacja webowa op
 Najpierw sklonuj repozytorium na swój lokalny komputer:
 
 ```bash
-git clone <URL_REPOZYTORIUM>
-cd UAIS-University-administration-information-system
+git clone https://github.com/deAdler-alt/UAIS-University-administration-information-system.git
+cd UAIS_Project
 ```
 
 ---
@@ -110,6 +110,22 @@ python manage.py createsuperuser
 
 - **Email:** <admin@edu.pl>  
   **Hasło:** passwordadmin
+
+UWAGA: Podani użytkownicy są przeznaczeni do logowania się w panelu administracji DJango, alternatywnie spróbuj dedykowanych do testów aplikacji utworzonych profili użytkowników:
+
+ADMINI - admin platformy po stronie aplikacji
+```
+email: iwysocki@edu.pl
+hasło: Administrator@123
+rola: Administrator
+```
+
+PRAWNICY - rola do testów aplikacji
+```
+email: kkowalski@edu.pl
+hasło: Adwokat@123
+Rola: Radca prawny
+```
 
 Następnie zaloguj się na jeden z tych adresów:
 
